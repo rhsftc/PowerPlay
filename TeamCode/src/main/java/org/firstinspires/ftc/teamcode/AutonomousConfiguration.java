@@ -6,7 +6,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
  * Created by Ron on 11/16/2016.
- * Modified: 10/10/2021
+ * Modified: 9/14/2022
  * <p>
  * This class provides configuration for an autonomous opMode.
  * Most games benefit from autonomous opModes that can implement
@@ -24,6 +24,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  */
 
 public class AutonomousConfiguration {
+    private boolean gamepad1IsOK, gamepad2IsOK;
     private AllianceColor alliance;
     private StartPosition startPosition;
     private ParkLocation parklocation;
@@ -53,9 +54,11 @@ public class AutonomousConfiguration {
     private DebouncedButton yButton;
 
     /*
-     Pass in gamepad and telemetry from your opMode when creating this object.
+     * Pass in gamepad and telemetry from your opMode when creating this object.
      */
     public AutonomousConfiguration(Gamepad gamepad, Telemetry telemetry1) {
+        gamepad1IsOK = false;
+        gamepad2IsOK = false;
         this.gamePad1 = new NinjaGamePad(gamepad);
         aButton = gamePad1.getAButton().debounced();
         bButton = gamePad1.getBButton().debounced();
@@ -115,7 +118,8 @@ public class AutonomousConfiguration {
         telemetry.addLine("Game pad or app Start will end selection.");
     }
 
-    // Call this in a loop from your opMode. It will returns true if you press the game pad Start.
+    // Call this in a loop from your opMode. It will returns true if you press the
+    // game pad Start.
     public boolean GetOptions() {
         if (xButton.getRise()) {
             alliance = AllianceColor.Blue;
@@ -214,9 +218,9 @@ public class AutonomousConfiguration {
     }
 
     /*
-        Where do we start the robot
-        Back is towards the warehouse.
-        Front if towards the audience.
+     * Where do we start the robot
+     * Back is towards the warehouse.
+     * Front if towards the audience.
      */
     public enum StartPosition {
         None,
@@ -229,7 +233,7 @@ public class AutonomousConfiguration {
     }
 
     /*
-        Where do we park. Default is do not park.
+     * Where do we park. Default is do not park.
      */
     public enum ParkLocation {
         None,
@@ -243,8 +247,8 @@ public class AutonomousConfiguration {
     }
 
     /*
-        Yes means deliver the duck from the carousel.
-        Default is No.
+     * Yes means deliver the duck from the carousel.
+     * Default is No.
      */
     public enum DeliverDuck {
         No,
@@ -256,8 +260,8 @@ public class AutonomousConfiguration {
     }
 
     /*
-        Yes means deliver freight to the shipping hub.
-        Default is No.
+     * Yes means deliver freight to the shipping hub.
+     * Default is No.
      */
     public enum DeliverFreight {
         No,
