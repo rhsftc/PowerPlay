@@ -28,16 +28,18 @@ public class AutonomousConfiguration {
     private AllianceColor alliance;
     private StartPosition startPosition;
     private ParkLocation parklocation;
-    private DeliverDuck deliverDuck;
-    private DeliverFreight deliverFreight;
+    private ParkOnSignalZone parkOnSignalZone;
+    private PlaceConesOnJunctions placeConesOnJunctions;
+    private PlaceConeInTerminal placeConeInTerminal;
     private int delayStartSeconds;
     private NinjaGamePad gamePad1;
     private Telemetry telemetry;
     private Telemetry.Item teleAlliance;
     private Telemetry.Item teleStartPosition;
     private Telemetry.Item teleParkLocation;
-    private Telemetry.Item teleDeliverDuck;
-    private Telemetry.Item teleDeliverFreight;
+    private Telemetry.Item teleParkOnSignalZone;
+    private Telemetry.Item telePlaceConeInTerminal;
+    private Telemetry.Item telePlaceConesOnJunctions;
     private Telemetry.Item teleDelayStartSeconds;
     private DebouncedButton aButton;
     private DebouncedButton bButton;
@@ -76,10 +78,11 @@ public class AutonomousConfiguration {
         this.telemetry = telemetry1;
         // Default selections if driver does not select anything.
         alliance = AllianceColor.Red;
-        startPosition = StartPosition.Front;
+        startPosition = StartPosition.None;
         parklocation = ParkLocation.None;
-        deliverFreight = DeliverFreight.No;
-        deliverDuck = DeliverDuck.No;
+        placeConesOnJunctions = PlaceConesOnJunctions.No;
+        parkOnSignalZone = ParkOnSignalZone.No;
+        placeConeInTerminal = PlaceConeInTerminal.No;
         delayStartSeconds = 0;
         ShowHelp();
     }
@@ -96,12 +99,16 @@ public class AutonomousConfiguration {
         return parklocation;
     }
 
-    public DeliverDuck getDeliverDuck() {
-        return deliverDuck;
+    public ParkOnSignalZone getParkOnSignalZone() {
+        return parkOnSignalZone;
     }
 
-    public DeliverFreight getDeliverFreight() {
-        return deliverFreight;
+    public PlaceConesOnJunctions getPlaceConesOnJunctions() {
+        return placeConesOnJunctions;
+    }
+
+    public PlaceConeInTerminal getPlaceConeInTerminal() {
+        return placeConeInTerminal;
     }
 
     public int DelayStartSeconds() {
@@ -112,8 +119,9 @@ public class AutonomousConfiguration {
         teleAlliance = telemetry.addData("X = Blue, B = Red", getAlliance());
         teleStartPosition = telemetry.addData("D-pad left/right, select start position", getStartPosition());
         teleParkLocation = telemetry.addData("D-pad up to cycle park location", getParklocation());
-        teleDeliverDuck = telemetry.addData("D-pad down to cycle deliver duck", getDeliverDuck());
-        teleDeliverFreight = telemetry.addData("Y to cycle deliver freight", getDeliverFreight());
+        teleParkOnSignalZone = telemetry.addData("D-pad down to cycle park on signal zone", getParkOnSignalZone());
+        telePlaceConesOnJunctions = telemetry.addData("Y to cycle cones on junctions", getPlaceConesOnJunctions());
+        telePlaceConeInTerminal = telemetry.addData("A to cycle place cone in terminal", getPlaceConeInTerminal());
         teleDelayStartSeconds = telemetry.addData("Left & Right buttons, Delay Start", DelayStartSeconds());
         telemetry.addLine("Game pad or app Start will end selection.");
     }
@@ -134,13 +142,13 @@ public class AutonomousConfiguration {
         teleAlliance.setValue(alliance);
 
         if (dPadLeft.getRise()) {
-            startPosition = StartPosition.Back;
-            telemetry.speak("start back");
+            startPosition = StartPosition.Right;
+            telemetry.speak("start right");
         }
 
         if (dPadRight.getRise()) {
-            startPosition = StartPosition.Front;
-            telemetry.speak("start front");
+            startPosition = StartPosition.Left;
+            telemetry.speak("start left");
         }
 
         teleStartPosition.setValue(startPosition);
@@ -148,14 +156,11 @@ public class AutonomousConfiguration {
         if (dPadUp.getRise()) {
             parklocation = parklocation.getNext();
             switch (parklocation) {
-                case StorageUnit:
-                    telemetry.speak("park in storage unit");
+                case SubStation:
+                    telemetry.speak("park in substation");
                     break;
-                case WarehouseFront:
-                    telemetry.speak("park in warehouse front");
-                    break;
-                case WarehouseBack:
-                    telemetry.speak("park in warehouse back");
+                case Terminal:
+                    telemetry.speak("park in terminal");
                     break;
             }
         }
@@ -163,42 +168,53 @@ public class AutonomousConfiguration {
         teleParkLocation.setValue(parklocation);
 
         if (dPadDown.getRise()) {
-            deliverDuck = deliverDuck.getNext();
-            switch (deliverDuck) {
+            parkOnSignalZone = parkOnSignalZone.getNext();
+            switch (parkOnSignalZone) {
                 case Yes:
-                    telemetry.speak("deliver duck, yes");
+                    telemetry.speak("park on signal zone, yes");
                     break;
                 case No:
-                    telemetry.speak("deleiver duck, no");
+                    telemetry.speak("park on signal zone,, no");
                     break;
             }
         }
 
-        teleDeliverDuck.setValue(deliverDuck);
+        teleParkOnSignalZone.setValue(parkOnSignalZone);
 
         if (yButton.getRise()) {
-            deliverFreight = deliverFreight.getNext();
-            switch (deliverFreight) {
+            placeConesOnJunctions = placeConesOnJunctions.getNext();
+            switch (placeConesOnJunctions) {
                 case Yes:
-                    telemetry.speak("deliver freight, yes");
+                    telemetry.speak("place cones on junctions, yes");
                     break;
                 case No:
-                    telemetry.speak("deleiver freight, no");
+                    telemetry.speak("place cones on junctions, no");
                     break;
             }
         }
 
-        teleDeliverFreight.setValue(deliverFreight);
+        telePlaceConeInTerminal.setValue(placeConesOnJunctions);
+
+        if (aButton.getRise()) {
+            placeConeInTerminal = placeConeInTerminal.getNext();
+            switch (placeConeInTerminal) {
+                case Yes:
+                    telemetry.speak("place cone in terminal, yes");
+                    break;
+                case No:
+                    telemetry.speak("place cone in terminal, no");
+            }
+        }
 
         // Keep range within 0-15 seconds. Wrap at either end.
         if (leftBumper.getRise()) {
             delayStartSeconds = delayStartSeconds - 1;
-            delayStartSeconds = (delayStartSeconds < 0) ? delayStartSeconds = 15 : delayStartSeconds;
+            delayStartSeconds = (delayStartSeconds < 0) ? 15 : delayStartSeconds;
             telemetry.speak("delay start " + delayStartSeconds + " seconds");
         }
         if (rightBumper.getRise()) {
             delayStartSeconds = delayStartSeconds + 1;
-            delayStartSeconds = (delayStartSeconds > 15) ? delayStartSeconds = 0 : delayStartSeconds;
+            delayStartSeconds = (delayStartSeconds > 15) ? 0 : delayStartSeconds;
             telemetry.speak("delay start " + delayStartSeconds + " seconds");
         }
 
@@ -219,13 +235,13 @@ public class AutonomousConfiguration {
 
     /*
      * Where do we start the robot
-     * Back is towards the warehouse.
-     * Front if towards the audience.
+     * Right is on the right of your substation.
+     * Left is on the left of your substation.
      */
     public enum StartPosition {
         None,
-        Back,
-        Front;
+        Right,
+        Left;
 
         public StartPosition getNext() {
             return values()[(ordinal() + 1) % values().length];
@@ -237,9 +253,8 @@ public class AutonomousConfiguration {
      */
     public enum ParkLocation {
         None,
-        WarehouseFront,
-        WarehouseBack,
-        StorageUnit;
+        Terminal,
+        SubStation;
 
         public ParkLocation getNext() {
             return values()[(ordinal() + 1) % values().length];
@@ -247,27 +262,40 @@ public class AutonomousConfiguration {
     }
 
     /*
-     * Yes means deliver the duck from the carousel.
+     * Yes means park on the signal zone.
      * Default is No.
      */
-    public enum DeliverDuck {
+    public enum ParkOnSignalZone {
         No,
         Yes;
 
-        public DeliverDuck getNext() {
+        public ParkOnSignalZone getNext() {
             return values()[(ordinal() + 1) % values().length];
         }
     }
 
     /*
-     * Yes means deliver freight to the shipping hub.
+     * Yes means place cones on the junctions.
      * Default is No.
      */
-    public enum DeliverFreight {
+    public enum PlaceConesOnJunctions {
         No,
         Yes;
 
-        public DeliverFreight getNext() {
+        public PlaceConesOnJunctions getNext() {
+            return values()[(ordinal() + 1) % values().length];
+        }
+    }
+
+    /*
+     * Yes means place cone in the terminal.
+     *  No is the default.
+     */
+    public enum PlaceConeInTerminal {
+        No,
+        Yes;
+
+        public PlaceConeInTerminal getNext() {
             return values()[(ordinal() + 1) % values().length];
         }
     }
