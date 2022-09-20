@@ -4,8 +4,6 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-import java.util.ArrayList;
-
 /**
  * Created by Ron on 11/16/2016.
  * Modified: 9/14/2022
@@ -26,7 +24,6 @@ import java.util.ArrayList;
  */
 
 public class AutonomousConfiguration {
-    private boolean gamepad1IsOK, gamepad2IsOK;
     private AllianceColor alliance;
     private StartPosition startPosition;
     private ParkLocation parklocation;
@@ -34,7 +31,7 @@ public class AutonomousConfiguration {
     private PlaceConesOnJunctions placeConesOnJunctions;
     private PlaceConeInTerminal placeConeInTerminal;
     private int delayStartSeconds;
-    private NinjaGamePad gamePad1;
+    private boolean readyToStart;
     private Telemetry telemetry;
     private Telemetry.Item teleAlliance;
     private Telemetry.Item teleStartPosition;
@@ -43,6 +40,7 @@ public class AutonomousConfiguration {
     private Telemetry.Item telePlaceConeInTerminal;
     private Telemetry.Item telePlaceConesOnJunctions;
     private Telemetry.Item teleDelayStartSeconds;
+    private Telemetry.Item teleReadyToStart;
 
     private DebouncedButton aButton;
     private DebouncedButton bButton;
@@ -52,20 +50,18 @@ public class AutonomousConfiguration {
     private DebouncedButton dPadUp;
     private DebouncedButton leftBumper;
     private DebouncedButton rightBumper;
-    private DebouncedButton leftStickButton;
-    private DebouncedButton rightStickButton;
     private DebouncedButton startButton;
     private DebouncedButton xButton;
     private DebouncedButton yButton;
+    private DebouncedButton leftStickButton;
+    private DebouncedButton rightStickButton;
 
 
     /*
      * Pass in the gamepad and telemetry from your opMode.
      */
     public void init(Gamepad gamepad, Telemetry telemetry1) {
-        gamepad1IsOK = false;
-        gamepad2IsOK = false;
-        this.gamePad1 = new NinjaGamePad(gamepad);
+        NinjaGamePad gamePad1 = new NinjaGamePad(gamepad);
         aButton = gamePad1.getAButton().debounced();
         bButton = gamePad1.getBButton().debounced();
         dPadLeft = gamePad1.getDpadLeft().debounced();
@@ -82,12 +78,13 @@ public class AutonomousConfiguration {
         this.telemetry = telemetry1;
 
         // Default selections if driver does not select anything.
-        alliance = AllianceColor.Red;
+        alliance = AllianceColor.None;
         startPosition = StartPosition.None;
         parklocation = ParkLocation.None;
         placeConesOnJunctions = PlaceConesOnJunctions.No;
         parkOnSignalZone = ParkOnSignalZone.No;
         placeConeInTerminal = PlaceConeInTerminal.No;
+        readyToStart = false;
         delayStartSeconds = 0;
 
         ShowHelp();
@@ -117,8 +114,12 @@ public class AutonomousConfiguration {
         return placeConeInTerminal;
     }
 
-    public int DelayStartSeconds() {
+    public int getDelayStartSeconds() {
         return delayStartSeconds;
+    }
+
+    public boolean getReadyToStart() {
+        return readyToStart;
     }
 
     private void ShowHelp() {
@@ -128,13 +129,14 @@ public class AutonomousConfiguration {
         teleParkOnSignalZone = telemetry.addData("D-pad down to cycle park on signal zone", getParkOnSignalZone());
         telePlaceConesOnJunctions = telemetry.addData("Y to cycle cones on junctions", getPlaceConesOnJunctions());
         telePlaceConeInTerminal = telemetry.addData("A to cycle place cone in terminal", getPlaceConeInTerminal());
-        teleDelayStartSeconds = telemetry.addData("Left & Right buttons, Delay Start", DelayStartSeconds());
-        telemetry.addLine("Game pad or app Start will end selection.");
+        teleDelayStartSeconds = telemetry.addData("Left & Right buttons, Delay Start", getDelayStartSeconds());
+        teleReadyToStart = telemetry.addData("Ready to start: ", getReadyToStart());
     }
 
     // Call this in a loop from your opMode. It will returns true if you press the
     // game pad Start.
     public void init_loop() {
+        //Alliance Color
         if (xButton.getRise()) {
             alliance = AllianceColor.Blue;
             telemetry.speak("blue");
@@ -144,24 +146,27 @@ public class AutonomousConfiguration {
             alliance = AllianceColor.Red;
             telemetry.speak("red");
         }
-
         teleAlliance.setValue(alliance);
 
-        if (dPadLeft.getRise()) {
+        //Start Position
+        if (dPadRight.getRise()) {
             startPosition = StartPosition.Right;
             telemetry.speak("start right");
         }
 
-        if (dPadRight.getRise()) {
+        if (dPadLeft.getRise()) {
             startPosition = StartPosition.Left;
             telemetry.speak("start left");
         }
-
         teleStartPosition.setValue(startPosition);
 
+        //Park Location
         if (dPadUp.getRise()) {
             parklocation = parklocation.getNext();
             switch (parklocation) {
+                case None:
+                    telemetry.speak("park, no.");
+                    break;
                 case SubStation:
                     telemetry.speak("park in substation");
                     break;
@@ -170,9 +175,9 @@ public class AutonomousConfiguration {
                     break;
             }
         }
-
         teleParkLocation.setValue(parklocation);
 
+        //Park on Signal Zone
         if (dPadDown.getRise()) {
             parkOnSignalZone = parkOnSignalZone.getNext();
             switch (parkOnSignalZone) {
@@ -184,9 +189,9 @@ public class AutonomousConfiguration {
                     break;
             }
         }
-
         teleParkOnSignalZone.setValue(parkOnSignalZone);
 
+        //Place cones on junction.
         if (yButton.getRise()) {
             placeConesOnJunctions = placeConesOnJunctions.getNext();
             switch (placeConesOnJunctions) {
@@ -198,9 +203,9 @@ public class AutonomousConfiguration {
                     break;
             }
         }
+        telePlaceConesOnJunctions.setValue(placeConesOnJunctions);
 
-        telePlaceConeInTerminal.setValue(placeConesOnJunctions);
-
+        //Place cone in terminal
         if (aButton.getRise()) {
             placeConeInTerminal = placeConeInTerminal.getNext();
             switch (placeConeInTerminal) {
@@ -211,6 +216,7 @@ public class AutonomousConfiguration {
                     telemetry.speak("place cone in terminal, no");
             }
         }
+        telePlaceConeInTerminal.setValue(placeConeInTerminal);
 
         // Keep range within 0-15 seconds. Wrap at either end.
         if (leftBumper.getRise()) {
@@ -223,15 +229,15 @@ public class AutonomousConfiguration {
             delayStartSeconds = (delayStartSeconds > 15) ? 0 : delayStartSeconds;
             telemetry.speak("delay start " + delayStartSeconds + " seconds");
         }
-
         teleDelayStartSeconds.setValue(delayStartSeconds);
 
-        if (startButton.getFall()) {
-            telemetry.speak("ready to start");
-        }
+        //Have the required options been set?
+        readyToStart = alliance != AllianceColor.None && startPosition != StartPosition.None;
+        teleReadyToStart.setValue(getReadyToStart());
     }
 
     public enum AllianceColor {
+        None,       //Make the driver select a color.
         Red,
         Blue
     }
@@ -243,12 +249,8 @@ public class AutonomousConfiguration {
      */
     public enum StartPosition {
         None,
-        Right,
-        Left;
-
-        public StartPosition getNext() {
-            return values()[(ordinal() + 1) % values().length];
-        }
+        Left,
+        Right;
     }
 
     /*

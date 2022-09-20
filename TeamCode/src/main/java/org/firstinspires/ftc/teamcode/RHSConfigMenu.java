@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -50,20 +51,20 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="Config Menu Example", group="Test")
+@Autonomous(name="Config Menu Example", group="Test")
 //@Disabled
 public class RHSConfigMenu extends OpMode
 {
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
+    AutonomousConfiguration autonomousConfiguration = new AutonomousConfiguration();
 
     /*
      * Code to run ONCE when the driver hits INIT
      */
     @Override
     public void init() {
-
-        telemetry.addData("Status", "Initialized");
+        autonomousConfiguration.init(this.gamepad1, this.telemetry);
     }
 
     /*
@@ -71,6 +72,7 @@ public class RHSConfigMenu extends OpMode
      */
     @Override
     public void init_loop() {
+        autonomousConfiguration.init_loop();
     }
 
     /*
@@ -86,7 +88,7 @@ public class RHSConfigMenu extends OpMode
      */
     @Override
     public void loop() {
-        // Show the elapsed game time and wheel power.
+        // Show the elapsed game time.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
     }
 
