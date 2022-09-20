@@ -4,6 +4,8 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+import java.util.ArrayList;
+
 /**
  * Created by Ron on 11/16/2016.
  * Modified: 9/14/2022
@@ -41,6 +43,7 @@ public class AutonomousConfiguration {
     private Telemetry.Item telePlaceConeInTerminal;
     private Telemetry.Item telePlaceConesOnJunctions;
     private Telemetry.Item teleDelayStartSeconds;
+
     private DebouncedButton aButton;
     private DebouncedButton bButton;
     private DebouncedButton dPadLeft;
@@ -55,10 +58,11 @@ public class AutonomousConfiguration {
     private DebouncedButton xButton;
     private DebouncedButton yButton;
 
+
     /*
-     * Pass in gamepad and telemetry from your opMode when creating this object.
+     * Pass in the gamepad and telemetry from your opMode.
      */
-    public AutonomousConfiguration(Gamepad gamepad, Telemetry telemetry1) {
+    public void init(Gamepad gamepad, Telemetry telemetry1) {
         gamepad1IsOK = false;
         gamepad2IsOK = false;
         this.gamePad1 = new NinjaGamePad(gamepad);
@@ -76,6 +80,7 @@ public class AutonomousConfiguration {
         rightStickButton = gamePad1.getRightStickButton().debounced();
         startButton = gamePad1.getStartButton().debounced();
         this.telemetry = telemetry1;
+
         // Default selections if driver does not select anything.
         alliance = AllianceColor.Red;
         startPosition = StartPosition.None;
@@ -84,6 +89,7 @@ public class AutonomousConfiguration {
         parkOnSignalZone = ParkOnSignalZone.No;
         placeConeInTerminal = PlaceConeInTerminal.No;
         delayStartSeconds = 0;
+
         ShowHelp();
     }
 
@@ -128,7 +134,7 @@ public class AutonomousConfiguration {
 
     // Call this in a loop from your opMode. It will returns true if you press the
     // game pad Start.
-    public boolean GetOptions() {
+    public void init_loop() {
         if (xButton.getRise()) {
             alliance = AllianceColor.Blue;
             telemetry.speak("blue");
@@ -222,10 +228,7 @@ public class AutonomousConfiguration {
 
         if (startButton.getFall()) {
             telemetry.speak("ready to start");
-            return true;
         }
-
-        return false;
     }
 
     public enum AllianceColor {
