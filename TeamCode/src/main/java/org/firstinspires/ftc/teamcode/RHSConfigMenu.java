@@ -51,7 +51,7 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="Config Menu Example", group="Test")
+@Autonomous(name="Options Menu", group="Autonomous")
 //@Disabled
 public class RHSConfigMenu extends OpMode
 {
