@@ -80,6 +80,10 @@ public class RHSConfigMenu extends OpMode
      */
     @Override
     public void start() {
+        if (!autonomousConfiguration.getReadyToStart()) {
+            telemetry.addData("Alert","Not ready to start!");
+            requestOpModeStop();
+        }
         runtime.reset();
     }
 
