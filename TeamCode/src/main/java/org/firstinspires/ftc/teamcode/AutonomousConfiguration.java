@@ -6,7 +6,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
  * Created by Ron on 11/16/2016.
- * Modified: 9/14/2022
+ * Modified: 10/10/2022
  * <p>
  * This class provides configuration for an autonomous opMode.
  * Most games benefit from autonomous opModes that can implement
@@ -20,17 +20,12 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * </p>
  * <p>
  * This class is a way to solve these problems.
+ * It is designed to used from opMode (iterative) class.
  * </p>
  */
 
 public class AutonomousConfiguration {
-    private AllianceColor alliance;
-    private StartPosition startPosition;
-    private ParkLocation parklocation;
-    private ParkOnSignalZone parkOnSignalZone;
-    private PlaceConesOnJunctions placeConesOnJunctions;
-    private PlaceConeInTerminal placeConeInTerminal;
-    private int delayStartSeconds;
+    private AutonomousOptions autonomousOptions;
     private boolean readyToStart;
     private Telemetry telemetry;
     private Telemetry.Item teleAlliance;
@@ -78,44 +73,44 @@ public class AutonomousConfiguration {
         this.telemetry = telemetry1;
 
         // Default selections if driver does not select anything.
-        alliance = AllianceColor.None;
-        startPosition = StartPosition.None;
-        parklocation = ParkLocation.None;
-        placeConesOnJunctions = PlaceConesOnJunctions.No;
-        parkOnSignalZone = ParkOnSignalZone.No;
-        placeConeInTerminal = PlaceConeInTerminal.No;
+        autonomousOptions = new AutonomousOptions();
+        autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.None);
+        autonomousOptions.setStartPosition(AutonomousOptions.StartPosition.None);
+        autonomousOptions.setParkLocation(AutonomousOptions.ParkLocation.None);
+        autonomousOptions.setPlaceConeInTerminal(AutonomousOptions.PlaceConeInTerminal.No);
+        autonomousOptions.setPlaceConesOnJunctions(AutonomousOptions.PlaceConesOnJunctions.No);
+        autonomousOptions.setParkOnSignalZone(AutonomousOptions.ParkOnSignalZone.No);
+        autonomousOptions.setDelayStartSeconds(0);
         readyToStart = false;
-        delayStartSeconds = 0;
-
         ShowHelp();
     }
 
-    public AllianceColor getAlliance() {
-        return alliance;
+    public AutonomousOptions.AllianceColor getAlliance() {
+        return autonomousOptions.getAllianceColor();
     }
 
-    public StartPosition getStartPosition() {
-        return startPosition;
+    public AutonomousOptions.StartPosition getStartPosition() {
+        return autonomousOptions.getStartPosition();
     }
 
-    public ParkLocation getParklocation() {
-        return parklocation;
+    public AutonomousOptions.ParkLocation getParklocation() {
+        return autonomousOptions.getParklocation();
     }
 
-    public ParkOnSignalZone getParkOnSignalZone() {
-        return parkOnSignalZone;
+    public AutonomousOptions.ParkOnSignalZone getParkOnSignalZone() {
+        return autonomousOptions.getParkOnSignalZone();
     }
 
-    public PlaceConesOnJunctions getPlaceConesOnJunctions() {
-        return placeConesOnJunctions;
+    public AutonomousOptions.PlaceConesOnJunctions getPlaceConesOnJunctions() {
+        return autonomousOptions.getPlaceConesOnJunctions();
     }
 
-    public PlaceConeInTerminal getPlaceConeInTerminal() {
-        return placeConeInTerminal;
+    public AutonomousOptions.PlaceConeInTerminal getPlaceConeInTerminal() {
+        return autonomousOptions.getPlaceConeInTerminal();
     }
 
     public int getDelayStartSeconds() {
-        return delayStartSeconds;
+        return autonomousOptions.getDelayStartSeconds();
     }
 
     public boolean getReadyToStart() {
@@ -133,37 +128,36 @@ public class AutonomousConfiguration {
         teleReadyToStart = telemetry.addData("Ready to start: ", getReadyToStart());
     }
 
-    // Call this in a loop from your opMode. It will returns true if you press the
+    // Call this in the init_loop from your opMode. It will returns true if you press the
     // game pad Start.
     public void init_loop() {
         //Alliance Color
         if (xButton.getRise()) {
-            alliance = AllianceColor.Blue;
+            autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.Blue);
             telemetry.speak("blue");
         }
 
         if (bButton.getRise()) {
-            alliance = AllianceColor.Red;
+            autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.Red);
             telemetry.speak("red");
         }
-        teleAlliance.setValue(alliance);
+        teleAlliance.setValue(autonomousOptions.getAllianceColor());
 
         //Start Position
         if (dPadRight.getRise()) {
-            startPosition = StartPosition.Right;
+            autonomousOptions.setStartPosition(AutonomousOptions.StartPosition.Right);
             telemetry.speak("start right");
         }
 
         if (dPadLeft.getRise()) {
-            startPosition = StartPosition.Left;
+            autonomousOptions.setStartPosition(AutonomousOptions.StartPosition.Left);
             telemetry.speak("start left");
         }
-        teleStartPosition.setValue(startPosition);
+        teleStartPosition.setValue(autonomousOptions.getStartPosition());
 
         //Park Location
         if (dPadUp.getRise()) {
-            parklocation = parklocation.getNext();
-            switch (parklocation) {
+            switch (autonomousOptions.getParklocation().getNext()) {
                 case None:
                     telemetry.speak("park, no.");
                     break;
@@ -175,12 +169,11 @@ public class AutonomousConfiguration {
                     break;
             }
         }
-        teleParkLocation.setValue(parklocation);
+        teleParkLocation.setValue(autonomousOptions.getParklocation());
 
         //Park on Signal Zone
         if (dPadDown.getRise()) {
-            parkOnSignalZone = parkOnSignalZone.getNext();
-            switch (parkOnSignalZone) {
+            switch (autonomousOptions.getParkOnSignalZone().getNext()) {
                 case Yes:
                     telemetry.speak("park on signal zone, yes");
                     break;
@@ -189,12 +182,11 @@ public class AutonomousConfiguration {
                     break;
             }
         }
-        teleParkOnSignalZone.setValue(parkOnSignalZone);
+        teleParkOnSignalZone.setValue(autonomousOptions.getParkOnSignalZone());
 
         //Place cones on junction.
         if (yButton.getRise()) {
-            placeConesOnJunctions = placeConesOnJunctions.getNext();
-            switch (placeConesOnJunctions) {
+            switch (autonomousOptions.getPlaceConesOnJunctions().getNext()) {
                 case Yes:
                     telemetry.speak("place cones on junctions, yes");
                     break;
@@ -203,12 +195,11 @@ public class AutonomousConfiguration {
                     break;
             }
         }
-        telePlaceConesOnJunctions.setValue(placeConesOnJunctions);
+        telePlaceConesOnJunctions.setValue(autonomousOptions.getPlaceConesOnJunctions());
 
         //Place cone in terminal
         if (aButton.getRise()) {
-            placeConeInTerminal = placeConeInTerminal.getNext();
-            switch (placeConeInTerminal) {
+            switch (autonomousOptions.getPlaceConeInTerminal().getNext()) {
                 case Yes:
                     telemetry.speak("place cone in terminal, yes");
                     break;
@@ -216,23 +207,23 @@ public class AutonomousConfiguration {
                     telemetry.speak("place cone in terminal, no");
             }
         }
-        telePlaceConeInTerminal.setValue(placeConeInTerminal);
+        telePlaceConeInTerminal.setValue(autonomousOptions.getPlaceConeInTerminal());
 
         // Keep range within 0-15 seconds. Wrap at either end.
         if (leftBumper.getRise()) {
-            delayStartSeconds = delayStartSeconds - 1;
-            delayStartSeconds = (delayStartSeconds < 0) ? 15 : delayStartSeconds;
-            telemetry.speak("delay start " + delayStartSeconds + " seconds");
+            autonomousOptions.setDelayStartSeconds(autonomousOptions.getDelayStartSeconds() - 1);
+            autonomousOptions.setDelayStartSeconds((autonomousOptions.getDelayStartSeconds() < 0) ? 15 : autonomousOptions.getDelayStartSeconds());
+            telemetry.speak("delay start " + autonomousOptions.getDelayStartSeconds() + " seconds");
         }
         if (rightBumper.getRise()) {
-            delayStartSeconds = delayStartSeconds + 1;
-            delayStartSeconds = (delayStartSeconds > 15) ? 0 : delayStartSeconds;
-            telemetry.speak("delay start " + delayStartSeconds + " seconds");
+            autonomousOptions.setDelayStartSeconds(autonomousOptions.getDelayStartSeconds() + 1);
+            autonomousOptions.setDelayStartSeconds((autonomousOptions.getDelayStartSeconds() > 15) ? 0 : autonomousOptions.getDelayStartSeconds());
+            telemetry.speak("delay start " + autonomousOptions.getDelayStartSeconds() + " seconds");
         }
-        teleDelayStartSeconds.setValue(delayStartSeconds);
+        teleDelayStartSeconds.setValue(autonomousOptions.getDelayStartSeconds());
 
         //Have the required options been set?
-        readyToStart = alliance != AllianceColor.None && startPosition != StartPosition.None;
+        readyToStart = autonomousOptions.getAllianceColor() == AutonomousOptions.AllianceColor.None || autonomousOptions.getStartPosition() == AutonomousOptions.StartPosition.None;
         teleReadyToStart.setValue(getReadyToStart());
     }
 

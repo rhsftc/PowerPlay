@@ -10,10 +10,6 @@ public class AutonomousOptions {
     private PlaceConeInTerminal placeConeInTerminal;
     private PlaceConesOnJunctions placeConesOnJunctions;
 
-    public int getDelatStartSeconds() {
-        return delayStartSeconds;
-    }
-
     public AllianceColor getAllianceColor() {
         return allianceColor;
     }
@@ -26,11 +22,15 @@ public class AutonomousOptions {
         return startPosition;
     }
 
+    public void setStartPosition(StartPosition startPosition) {
+        this.startPosition = startPosition;
+    }
+
     public ParkLocation getParklocation() {
         return parklocation;
     }
 
-    public void setParklocation(ParkLocation parklocation) {
+    public void setParkLocation(ParkLocation parklocation) {
         this.parklocation = parklocation;
     }
 
