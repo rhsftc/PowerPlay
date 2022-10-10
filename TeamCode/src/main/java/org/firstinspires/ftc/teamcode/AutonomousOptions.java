@@ -2,8 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 
 public class AutonomousOptions {
-    private static final int delayStartSeconds = 0;
-    private AllianceColor alliance;
+    private int delayStartSeconds;
+    private AllianceColor allianceColor;
     private StartPosition startPosition;
     private ParkLocation parklocation;
     private ParkOnSignalZone parkOnSignalZone;
@@ -14,8 +14,12 @@ public class AutonomousOptions {
         return delayStartSeconds;
     }
 
-    public AllianceColor getAlliance() {
-        return alliance;
+    public AllianceColor getAllianceColor() {
+        return allianceColor;
+    }
+
+    public void setAllianceColor(AllianceColor allianceColor) {
+        this.allianceColor = allianceColor;
     }
 
     public StartPosition getStartPosition() {
@@ -26,16 +30,40 @@ public class AutonomousOptions {
         return parklocation;
     }
 
+    public void setParklocation(ParkLocation parklocation) {
+        this.parklocation = parklocation;
+    }
+
     public ParkOnSignalZone getParkOnSignalZone() {
         return parkOnSignalZone;
+    }
+
+    public void setParkOnSignalZone(ParkOnSignalZone parkOnSignalZone) {
+        this.parkOnSignalZone = parkOnSignalZone;
     }
 
     public PlaceConeInTerminal getPlaceConeInTerminal() {
         return placeConeInTerminal;
     }
 
+    public void setPlaceConeInTerminal(PlaceConeInTerminal placeConeInTerminal) {
+        this.placeConeInTerminal = placeConeInTerminal;
+    }
+
     public PlaceConesOnJunctions getPlaceConesOnJunctions() {
         return placeConesOnJunctions;
+    }
+
+    public void setPlaceConesOnJunctions(PlaceConesOnJunctions placeConesOnJunctions) {
+        this.placeConesOnJunctions = placeConesOnJunctions;
+    }
+
+    public int getDelayStartSeconds() {
+        return delayStartSeconds;
+    }
+
+    public void setDelayStartSeconds(int delayStartSeconds) {
+        this.delayStartSeconds = delayStartSeconds;
     }
 
     public enum AllianceColor {
