@@ -118,13 +118,13 @@ public class AutonomousConfiguration {
     }
 
     private void ShowHelp() {
-        teleAlliance = telemetry.addData("X = Blue, B = Red", getAlliance());
-        teleStartPosition = telemetry.addData("D-pad left/right, select start position", getStartPosition());
-        teleParkLocation = telemetry.addData("D-pad up to cycle park location", getParklocation());
-        teleParkOnSignalZone = telemetry.addData("D-pad down to cycle park on signal zone", getParkOnSignalZone());
-        telePlaceConesOnJunctions = telemetry.addData("Y to cycle cones on junctions", getPlaceConesOnJunctions());
-        telePlaceConeInTerminal = telemetry.addData("A to cycle place cone in terminal", getPlaceConeInTerminal());
-        teleDelayStartSeconds = telemetry.addData("Left & Right buttons, Delay Start", getDelayStartSeconds());
+        teleAlliance = telemetry.addData("X = Blue, B = Red", autonomousOptions.getAllianceColor());
+        teleStartPosition = telemetry.addData("D-pad left/right, select start position", autonomousOptions.getStartPosition());
+        teleParkLocation = telemetry.addData("D-pad up to cycle park location", autonomousOptions.getParklocation());
+        teleParkOnSignalZone = telemetry.addData("D-pad down to cycle park on signal zone", autonomousOptions.getParkOnSignalZone());
+        telePlaceConesOnJunctions = telemetry.addData("Y to cycle cones on junctions", autonomousOptions.getPlaceConesOnJunctions());
+        telePlaceConeInTerminal = telemetry.addData("A to cycle place cone in terminal", autonomousOptions.getPlaceConeInTerminal());
+        teleDelayStartSeconds = telemetry.addData("Left & Right buttons, Delay Start", autonomousOptions.getDelayStartSeconds());
         teleReadyToStart = telemetry.addData("Ready to start: ", getReadyToStart());
     }
 
@@ -157,7 +157,8 @@ public class AutonomousConfiguration {
 
         //Park Location
         if (dPadUp.getRise()) {
-            switch (autonomousOptions.getParklocation().getNext()) {
+            AutonomousOptions.ParkLocation parkLocation = autonomousOptions.getParklocation().getNext();
+            switch (parkLocation) {
                 case None:
                     telemetry.speak("park, no.");
                     break;
@@ -168,12 +169,14 @@ public class AutonomousConfiguration {
                     telemetry.speak("park in terminal");
                     break;
             }
+            autonomousOptions.setParkLocation(parkLocation);
+            teleParkLocation.setValue(parkLocation);
         }
-        teleParkLocation.setValue(autonomousOptions.getParklocation());
 
         //Park on Signal Zone
         if (dPadDown.getRise()) {
-            switch (autonomousOptions.getParkOnSignalZone().getNext()) {
+        AutonomousOptions.ParkOnSignalZone parkSignalZone = autonomousOptions.getParkOnSignalZone().getNext();
+            switch (parkSignalZone) {
                 case Yes:
                     telemetry.speak("park on signal zone, yes");
                     break;
@@ -181,12 +184,14 @@ public class AutonomousConfiguration {
                     telemetry.speak("park on signal zone,, no");
                     break;
             }
+            autonomousOptions.setParkOnSignalZone(parkSignalZone);
+            teleParkOnSignalZone.setValue(parkSignalZone);
         }
-        teleParkOnSignalZone.setValue(autonomousOptions.getParkOnSignalZone());
 
         //Place cones on junction.
         if (yButton.getRise()) {
-            switch (autonomousOptions.getPlaceConesOnJunctions().getNext()) {
+        AutonomousOptions.PlaceConesOnJunctions placeOnJunction = autonomousOptions.getPlaceConesOnJunctions().getNext();
+            switch (placeOnJunction) {
                 case Yes:
                     telemetry.speak("place cones on junctions, yes");
                     break;
@@ -194,20 +199,23 @@ public class AutonomousConfiguration {
                     telemetry.speak("place cones on junctions, no");
                     break;
             }
+            autonomousOptions.setPlaceConesOnJunctions(placeOnJunction);
+            telePlaceConesOnJunctions.setValue(placeOnJunction);
         }
-        telePlaceConesOnJunctions.setValue(autonomousOptions.getPlaceConesOnJunctions());
 
         //Place cone in terminal
         if (aButton.getRise()) {
-            switch (autonomousOptions.getPlaceConeInTerminal().getNext()) {
+        AutonomousOptions.PlaceConeInTerminal placeInTerminal = autonomousOptions.getPlaceConeInTerminal().getNext();
+            switch (placeInTerminal) {
                 case Yes:
                     telemetry.speak("place cone in terminal, yes");
                     break;
                 case No:
                     telemetry.speak("place cone in terminal, no");
             }
+            autonomousOptions.setPlaceConeInTerminal(placeInTerminal);
+            telePlaceConeInTerminal.setValue(placeInTerminal);
         }
-        telePlaceConeInTerminal.setValue(autonomousOptions.getPlaceConeInTerminal());
 
         // Keep range within 0-15 seconds. Wrap at either end.
         if (leftBumper.getRise()) {
@@ -223,8 +231,8 @@ public class AutonomousConfiguration {
         teleDelayStartSeconds.setValue(autonomousOptions.getDelayStartSeconds());
 
         //Have the required options been set?
-        readyToStart = autonomousOptions.getAllianceColor() == AutonomousOptions.AllianceColor.None || autonomousOptions.getStartPosition() == AutonomousOptions.StartPosition.None;
-        teleReadyToStart.setValue(getReadyToStart());
+        readyToStart = !(autonomousOptions.getAllianceColor() == AutonomousOptions.AllianceColor.None || autonomousOptions.getStartPosition() == AutonomousOptions.StartPosition.None);
+        teleReadyToStart.setValue(readyToStart);
     }
 
     public enum AllianceColor {
