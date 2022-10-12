@@ -8,7 +8,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
  * Created by Ron on 11/16/2016.
- * Modified: 10/10/2022
+ * Modified: 10/12/2022
  * <p>
  * This class provides configuration for an autonomous opMode.
  * Most games benefit from autonomous opModes that can implement
@@ -23,6 +23,9 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * <p>
  * This class is a way to solve these problems.
  * It is designed to used from opMode (iterative) class.
+ * The selected options can also be saved to a file, allowing the
+ * configuration options to be set before a match and to be available
+ * to any op Mode.
  * </p>
  */
 
@@ -52,6 +55,7 @@ public class AutonomousConfiguration {
     private DebouncedButton leftBumper;
     private DebouncedButton rightBumper;
     private DebouncedButton startButton;
+    private DebouncedButton backButton;
     private DebouncedButton xButton;
     private DebouncedButton yButton;
     private DebouncedButton leftStickButton;
@@ -78,19 +82,18 @@ public class AutonomousConfiguration {
         leftStickButton = gamePad1.getLeftStickButton().debounced();
         rightStickButton = gamePad1.getRightStickButton().debounced();
         startButton = gamePad1.getStartButton().debounced();
+        backButton = gamePad1.getBackButton().debounced();
+        //backButton=gamePad1.
         this.telemetry = telemetry1;
-
-        // Default selections if driver does not select anything.
+        // See if we saved the options yet. If not, save the defaults.
         autonomousOptions = new AutonomousOptions();
-        autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.None);
-        autonomousOptions.setStartPosition(AutonomousOptions.StartPosition.None);
-        autonomousOptions.setParkLocation(AutonomousOptions.ParkLocation.None);
-        autonomousOptions.setPlaceConeInTerminal(AutonomousOptions.PlaceConeInTerminal.No);
-        autonomousOptions.setPlaceConesOnJunctions(AutonomousOptions.PlaceConesOnJunctions.No);
-        autonomousOptions.setParkOnSignalZone(AutonomousOptions.ParkOnSignalZone.No);
-        autonomousOptions.setDelayStartSeconds(0);
-        readyToStart = false;
-        savedToFile = false;
+        if (!readWriteAutoOptions.optionsAreSaved()) {
+            resetOptions();
+            this.SaveOptions();
+        } else {
+            autonomousOptions = getSaveAutoOptions();
+        }
+
         ShowHelp();
     }
 
@@ -136,12 +139,16 @@ public class AutonomousConfiguration {
         teleDelayStartSeconds = telemetry.addData("Left & Right buttons, Delay Start", autonomousOptions.getDelayStartSeconds());
         teleReadyToStart = telemetry.addData("Ready to start: ", getReadyToStart());
         teleSavedToFile = telemetry.addData("Saved to file:", savedToFile);
-
+        telemetry.addLine("Back button resets all options.");
     }
 
     // Call this in the init_loop from your opMode. It will returns true if you press the
     // game pad Start.
     public void init_loop() {
+        //Set default options (ignore what was saved to the file.)
+        if (backButton.getRise()) {
+            resetOptions();
+        }
         //Alliance Color
         if (xButton.getRise()) {
             autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.Blue);
@@ -253,10 +260,31 @@ public class AutonomousConfiguration {
         }
     }
 
+    // Default selections if driver does not select anything.
+    private void resetOptions() {
+        autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.None);
+        autonomousOptions.setStartPosition(AutonomousOptions.StartPosition.None);
+        autonomousOptions.setParkLocation(AutonomousOptions.ParkLocation.None);
+        autonomousOptions.setPlaceConeInTerminal(AutonomousOptions.PlaceConeInTerminal.No);
+        autonomousOptions.setPlaceConesOnJunctions(AutonomousOptions.PlaceConesOnJunctions.No);
+        autonomousOptions.setParkOnSignalZone(AutonomousOptions.ParkOnSignalZone.No);
+        autonomousOptions.setDelayStartSeconds(0);
+        readyToStart = false;
+        savedToFile = false;
+    }
+
     private void SaveOptions() {
         ReadWriteAutoOptions readWriteAutoOptions = new ReadWriteAutoOptions(context);
         readWriteAutoOptions.storeObject(autonomousOptions);
-        readWriteAutoOptions.getObject();
+    }
+
+    public AutonomousOptions getSaveAutoOptions() {
+        ReadWriteAutoOptions readWriteAutoOptions = new ReadWriteAutoOptions(context);
+        AutonomousOptions temp = readWriteAutoOptions.getObject();
+        telemetry.addData("Start: ", temp.getStartPosition());
+        telemetry.update();
+        return temp;
+//        return readWriteAutoOptions.getObject();
     }
 
     public enum AllianceColor {
@@ -273,7 +301,7 @@ public class AutonomousConfiguration {
     public enum StartPosition {
         None,
         Left,
-        Right;
+        Right
     }
 
     /*

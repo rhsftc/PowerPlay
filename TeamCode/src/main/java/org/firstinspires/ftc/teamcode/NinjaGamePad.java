@@ -295,6 +295,25 @@ public class NinjaGamePad {
         };
     }
 
+    public OnOffButton getBackButton() {
+        return new OnOffButton() {
+            private DebouncedButton debounced;
+
+            @Override
+            public boolean isPressed() {
+                return gamepad.back;
+            }
+
+            @Override
+            public DebouncedButton debounced() {
+                if (debounced == null) {
+                    debounced = new DebouncedButton(this);
+                }
+                return debounced;
+            }
+        };
+    }
+
     public void getAllButtons() {
 //        return ImmutableSet.of(
 //                getRightStickButton(), getLeftStickButton(),

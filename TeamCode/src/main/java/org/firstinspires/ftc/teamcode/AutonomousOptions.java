@@ -3,6 +3,11 @@ package org.firstinspires.ftc.teamcode;
 
 import java.io.Serializable;
 
+/*
+This class stores autonomous options for use by autonomous or teleop op modes.
+It is currently set for the PowerPlay season but can be modified for upcoming seasons.
+It is a Java Serializable class to it can be saved to a file.
+ */
 public class AutonomousOptions implements Serializable {
     private static final long serialVersionUID = 7829136421241571165L;
 
@@ -71,11 +76,14 @@ public class AutonomousOptions implements Serializable {
     }
 
     public String toString() {
-        return "Alliance: " + getAllianceColor().toString();
+        return "AllianceColor: " + getAllianceColor().toString() + "\nStartLocation: " + getStartPosition().toString();
     }
 
+    /*
+     * Alliance color. Default to None so driver must select it.
+     */
     public enum AllianceColor {
-        None,       //Make the driver select a color.
+        None,
         Red,
         Blue
     }
@@ -88,7 +96,7 @@ public class AutonomousOptions implements Serializable {
     public enum StartPosition {
         None,
         Left,
-        Right;
+        Right
     }
 
     /*
