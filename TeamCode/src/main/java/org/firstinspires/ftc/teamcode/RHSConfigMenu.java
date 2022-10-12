@@ -59,7 +59,7 @@ public class RHSConfigMenu extends OpMode {
      */
     @Override
     public void init() {
-        autonomousConfiguration.init(this.gamepad1, this.telemetry);
+        autonomousConfiguration.init(this.gamepad1, this.telemetry, hardwareMap.appContext);
     }
 
     /*

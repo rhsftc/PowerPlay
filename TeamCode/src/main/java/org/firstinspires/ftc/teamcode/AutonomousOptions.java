@@ -70,6 +70,10 @@ public class AutonomousOptions implements Serializable {
         this.delayStartSeconds = delayStartSeconds;
     }
 
+    public String toString() {
+        return "Alliance: " + getAllianceColor().toString();
+    }
+
     public enum AllianceColor {
         None,       //Make the driver select a color.
         Red,

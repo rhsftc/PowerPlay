@@ -45,7 +45,7 @@ public class GetAutoOptions extends OpMode {
 
     @Override
     public void init() {
-      autonomousConfiguration.init(this.gamepad1, this.telemetry);
+      autonomousConfiguration.init(this.gamepad1, this.telemetry, hardwareMap.appContext);
       telemetry.addData("Status", "Initialized");
     }
 
@@ -64,6 +64,7 @@ public class GetAutoOptions extends OpMode {
      */
     @Override
     public void start() {
+
         runtime.reset();
     }
 

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.content.Context;
+
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -26,7 +28,10 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class AutonomousConfiguration {
     private AutonomousOptions autonomousOptions;
+    private Context context;
+    private ReadWriteAutoOptions readWriteAutoOptions;
     private boolean readyToStart;
+    private boolean savedToFile;
     private Telemetry telemetry;
     private Telemetry.Item teleAlliance;
     private Telemetry.Item teleStartPosition;
@@ -36,6 +41,7 @@ public class AutonomousConfiguration {
     private Telemetry.Item telePlaceConesOnJunctions;
     private Telemetry.Item teleDelayStartSeconds;
     private Telemetry.Item teleReadyToStart;
+    private Telemetry.Item teleSavedToFile;
 
     private DebouncedButton aButton;
     private DebouncedButton bButton;
@@ -55,7 +61,9 @@ public class AutonomousConfiguration {
     /*
      * Pass in the gamepad and telemetry from your opMode.
      */
-    public void init(Gamepad gamepad, Telemetry telemetry1) {
+    public void init(Gamepad gamepad, Telemetry telemetry1, Context context) {
+        this.context = context;
+        readWriteAutoOptions = new ReadWriteAutoOptions(context);
         NinjaGamePad gamePad1 = new NinjaGamePad(gamepad);
         aButton = gamePad1.getAButton().debounced();
         bButton = gamePad1.getBButton().debounced();
@@ -82,6 +90,7 @@ public class AutonomousConfiguration {
         autonomousOptions.setParkOnSignalZone(AutonomousOptions.ParkOnSignalZone.No);
         autonomousOptions.setDelayStartSeconds(0);
         readyToStart = false;
+        savedToFile = false;
         ShowHelp();
     }
 
@@ -126,6 +135,8 @@ public class AutonomousConfiguration {
         telePlaceConeInTerminal = telemetry.addData("A to cycle place cone in terminal", autonomousOptions.getPlaceConeInTerminal());
         teleDelayStartSeconds = telemetry.addData("Left & Right buttons, Delay Start", autonomousOptions.getDelayStartSeconds());
         teleReadyToStart = telemetry.addData("Ready to start: ", getReadyToStart());
+        teleSavedToFile = telemetry.addData("Saved to file:", savedToFile);
+
     }
 
     // Call this in the init_loop from your opMode. It will returns true if you press the
@@ -175,7 +186,7 @@ public class AutonomousConfiguration {
 
         //Park on Signal Zone
         if (dPadDown.getRise()) {
-        AutonomousOptions.ParkOnSignalZone parkSignalZone = autonomousOptions.getParkOnSignalZone().getNext();
+            AutonomousOptions.ParkOnSignalZone parkSignalZone = autonomousOptions.getParkOnSignalZone().getNext();
             switch (parkSignalZone) {
                 case Yes:
                     telemetry.speak("park on signal zone, yes");
@@ -190,7 +201,7 @@ public class AutonomousConfiguration {
 
         //Place cones on junction.
         if (yButton.getRise()) {
-        AutonomousOptions.PlaceConesOnJunctions placeOnJunction = autonomousOptions.getPlaceConesOnJunctions().getNext();
+            AutonomousOptions.PlaceConesOnJunctions placeOnJunction = autonomousOptions.getPlaceConesOnJunctions().getNext();
             switch (placeOnJunction) {
                 case Yes:
                     telemetry.speak("place cones on junctions, yes");
@@ -205,7 +216,7 @@ public class AutonomousConfiguration {
 
         //Place cone in terminal
         if (aButton.getRise()) {
-        AutonomousOptions.PlaceConeInTerminal placeInTerminal = autonomousOptions.getPlaceConeInTerminal().getNext();
+            AutonomousOptions.PlaceConeInTerminal placeInTerminal = autonomousOptions.getPlaceConeInTerminal().getNext();
             switch (placeInTerminal) {
                 case Yes:
                     telemetry.speak("place cone in terminal, yes");
@@ -233,6 +244,19 @@ public class AutonomousConfiguration {
         //Have the required options been set?
         readyToStart = !(autonomousOptions.getAllianceColor() == AutonomousOptions.AllianceColor.None || autonomousOptions.getStartPosition() == AutonomousOptions.StartPosition.None);
         teleReadyToStart.setValue(readyToStart);
+
+        //Save the options to a file if ready to start and start button is pressed.
+        if (startButton.getRise() && getReadyToStart()) {
+            SaveOptions();
+            savedToFile = true;
+            teleSavedToFile.setValue(true);
+        }
+    }
+
+    private void SaveOptions() {
+        ReadWriteAutoOptions readWriteAutoOptions = new ReadWriteAutoOptions(context);
+        readWriteAutoOptions.storeObject(autonomousOptions);
+        readWriteAutoOptions.getObject();
     }
 
     public enum AllianceColor {
