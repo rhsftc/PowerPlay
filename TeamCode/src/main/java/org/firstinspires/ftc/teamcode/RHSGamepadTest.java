@@ -29,51 +29,51 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
  * Demonstrates empty OpMode
  */
-@TeleOp(name = "Gamepad Test", group = "Test")
+@TeleOp(name = "Gamepad", group = "Test")
 //@Disabled
 public class RHSGamepadTest extends OpMode {
 
-  private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime runtime = new ElapsedTime();
+    private boolean gamePad1Ok = false;
 
-  @Override
-  public void init() {
-    telemetry.addData("Status", "Initialized");
-  }
+    @Override
+    public void init() {
+        telemetry.addData("Status", "Initialized");
+    }
 
-  /*
+    /*
      * Code to run when the op mode is first enabled goes here
      * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#start()
      */
-  @Override
-  public void init_loop() {
-    boolean a = gamepad1.a;
-    telemetry.addData("a", a);
-  }
+    @Override
+    public void init_loop() {
+        gamePad1Ok = gamepad1.a;
+        telemetry.addData("GamePad 1", gamePad1Ok);
+    }
 
-  /*
-   * This method will be called ONCE when start is pressed
-   * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
-   */
-  @Override
-  public void start() {
-    runtime.reset();
-  }
+    /*
+     * This method will be called ONCE when start is pressed
+     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
+     */
+    @Override
+    public void start() {
+        runtime.reset();
+    }
 
-  /*
-   * This method will be called repeatedly in a loop
-   * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
-   */
-  @Override
-  public void loop() {
-    telemetry.addData("Status", "Run Time: " + runtime.toString());
-  }
+    /*
+     * This method will be called repeatedly in a loop
+     * @see com.qualcomm.robotcore.eventloop.opmode.OpMode#loop()
+     */
+    @Override
+    public void loop() {
+        telemetry.addData("Game Pad 1 OK", gamePad1Ok);
+        telemetry.addData("Status", "Run Time: " + runtime.toString());
+    }
 }
