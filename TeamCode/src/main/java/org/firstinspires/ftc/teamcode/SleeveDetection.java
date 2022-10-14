@@ -31,17 +31,17 @@ public class SleeveDetection extends OpenCvPipeline {
 
     // Lower and upper boundaries for colors
     private static final Scalar
-            lower_yellow_bounds  = new Scalar(200, 200, 0, 255),
-            upper_yellow_bounds  = new Scalar(255, 255, 130, 255),
-            lower_cyan_bounds    = new Scalar(0, 200, 200, 255),
-            upper_cyan_bounds    = new Scalar(150, 255, 255, 255),
+            lower_yellow_bounds = new Scalar(200, 200, 0, 255),
+            upper_yellow_bounds = new Scalar(255, 255, 130, 255),
+            lower_cyan_bounds = new Scalar(0, 200, 200, 255),
+            upper_cyan_bounds = new Scalar(150, 255, 255, 255),
             lower_magenta_bounds = new Scalar(170, 0, 170, 255),
             upper_magenta_bounds = new Scalar(255, 60, 255, 255);
 
     // Color definitions
     private final Scalar
-            YELLOW  = new Scalar(255, 255, 0),
-            CYAN    = new Scalar(0, 255, 255),
+            YELLOW = new Scalar(255, 255, 0),
+            CYAN = new Scalar(0, 255, 255),
             MAGENTA = new Scalar(255, 0, 255);
 
     // Percent and mat definitions
@@ -64,11 +64,11 @@ public class SleeveDetection extends OpenCvPipeline {
         // Noise reduction
         Imgproc.blur(input, blurredMat, new Size(5, 5));
         blurredMat = blurredMat.submat(new Rect(sleeve_pointA, sleeve_pointB));
-        
+
         // Apply Morphology
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
         Imgproc.morphologyEx(blurredMat, blurredMat, Imgproc.MORPH_CLOSE, kernel);
-        
+
         // Gets channels from given source mat
         Core.inRange(blurredMat, lower_yellow_bounds, upper_yellow_bounds, yelMat);
         Core.inRange(blurredMat, lower_cyan_bounds, upper_cyan_bounds, cyaMat);
@@ -112,7 +112,7 @@ public class SleeveDetection extends OpenCvPipeline {
                     2
             );
         }
-        
+
         // Memory cleanup
         blurredMat.release();
         yelMat.release();
@@ -125,5 +125,13 @@ public class SleeveDetection extends OpenCvPipeline {
     // Returns an enum being the current position where the robot will park
     public ParkingPosition getPosition() {
         return position;
+    }
+
+    public double[] getColorPercent() {
+        double[] colors = new double[3];
+        colors[0] = yelPercent;
+        colors[1] = cyaPercent;
+        colors[2] = magPercent;
+        return colors;
     }
 }

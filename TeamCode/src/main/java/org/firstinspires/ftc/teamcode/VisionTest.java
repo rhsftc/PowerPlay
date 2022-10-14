@@ -22,20 +22,22 @@ public class VisionTest extends LinearOpMode {
         sleeveDetection = new SleeveDetection();
         camera.setPipeline(sleeveDetection);
 
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
-            public void onOpened()
-            {
-                camera.startStreaming(320,240, OpenCvCameraRotation.SIDEWAYS_LEFT);
+            public void onOpened() {
+                camera.startStreaming(320, 240, OpenCvCameraRotation.SIDEWAYS_LEFT);
             }
 
             @Override
-            public void onError(int errorCode) {}
+            public void onError(int errorCode) {
+            }
         });
 
         while (!isStarted()) {
             telemetry.addData("ROTATION: ", sleeveDetection.getPosition());
+            telemetry.addData("Yellow Percent", sleeveDetection.getColorPercent()[0]);
+            telemetry.addData("Cyan Percent", sleeveDetection.getColorPercent()[1]);
+            telemetry.addData("Magenta Percent", sleeveDetection.getColorPercent()[2]);
             telemetry.update();
         }
 
