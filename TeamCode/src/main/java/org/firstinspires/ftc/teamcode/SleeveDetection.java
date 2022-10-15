@@ -31,12 +31,12 @@ public class SleeveDetection extends OpenCvPipeline {
 
     // Lower and upper boundaries for colors
     private static final Scalar
-            lower_yellow_bounds = new Scalar(214, 202, 117, 255),
-            upper_yellow_bounds = new Scalar(239, 236, 145, 255),
-            lower_cyan_bounds = new Scalar(149, 182, 202, 255),
-            upper_cyan_bounds = new Scalar(163, 199, 219, 255),
-            lower_magenta_bounds = new Scalar(207, 113, 133, 0),
-            upper_magenta_bounds = new Scalar(255, 157, 178, 0);
+            lower_yellow_bounds = new Scalar(60, 0, 0, 255),
+            upper_yellow_bounds = new Scalar(95, 0, 0, 255),
+            lower_cyan_bounds = new Scalar(175, 0, 0, 255),
+            upper_cyan_bounds = new Scalar(195, 0, 0, 255),
+            lower_magenta_bounds = new Scalar(355, 0, 0, 0),
+            upper_magenta_bounds = new Scalar(360, 0, 0, 0);
 
     // Color definitions
     private final Scalar
@@ -64,7 +64,8 @@ public class SleeveDetection extends OpenCvPipeline {
         // Noise reduction
         Imgproc.blur(input, blurredMat, new Size(5, 5));
         blurredMat = blurredMat.submat(new Rect(sleeve_pointA, sleeve_pointB));
-
+        // HSV colorspace should handle light variationsbetter.
+        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
         // Apply Morphology
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
         Imgproc.morphologyEx(blurredMat, blurredMat, Imgproc.MORPH_CLOSE, kernel);
