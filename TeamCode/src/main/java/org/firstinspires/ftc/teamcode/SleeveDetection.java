@@ -16,38 +16,23 @@ public class SleeveDetection extends OpenCvPipeline {
     MAGENTA = Parking Right
      */
 
-    public enum ParkingPosition {
-        LEFT,
-        CENTER,
-        RIGHT
-    }
-
-    // TOPLEFT anchor point for the bounding box
-    private static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(145, 168);
-
     // Width and height for the bounding box
     public static int REGION_WIDTH = 30;
     public static int REGION_HEIGHT = 50;
-
     // Lower and upper boundaries for colors
-    private static final Scalar
-            lower_yellow_bounds = new Scalar(60, 0, 0, 255),
-            upper_yellow_bounds = new Scalar(95, 0, 0, 255),
-            lower_cyan_bounds = new Scalar(175, 0, 0, 255),
-            upper_cyan_bounds = new Scalar(195, 0, 0, 255),
-            lower_magenta_bounds = new Scalar(355, 0, 0, 0),
-            upper_magenta_bounds = new Scalar(360, 0, 0, 0);
-
+    public static Scalar lower_yellow_bounds = new Scalar(26, 55, 110),
+            upper_yellow_bounds = new Scalar(45, 174, 192),
+            lower_cyan_bounds = new Scalar(84, 45, 117),
+            upper_cyan_bounds = new Scalar(111, 165, 206),
+            lower_magenta_bounds = new Scalar(137, 43, 120),
+            upper_magenta_bounds = new Scalar(164, 218, 236);
+    // TOPLEFT anchor point for the bounding box
+    private static Point SLEEVE_TOPLEFT_ANCHOR_POINT = new Point(145, 168);
     // Color definitions
     private final Scalar
             YELLOW = new Scalar(255, 255, 0),
             CYAN = new Scalar(0, 255, 255),
             MAGENTA = new Scalar(255, 0, 255);
-
-    // Percent and mat definitions
-    private double yelPercent, cyaPercent, magPercent;
-    private Mat yelMat = new Mat(), cyaMat = new Mat(), magMat = new Mat(), blurredMat = new Mat();
-
     // Anchor point definitions
     Point sleeve_pointA = new Point(
             SLEEVE_TOPLEFT_ANCHOR_POINT.x,
@@ -55,17 +40,19 @@ public class SleeveDetection extends OpenCvPipeline {
     Point sleeve_pointB = new Point(
             SLEEVE_TOPLEFT_ANCHOR_POINT.x + REGION_WIDTH,
             SLEEVE_TOPLEFT_ANCHOR_POINT.y + REGION_HEIGHT);
-
+    // Percent and mat definitions
+    private double yelPercent, cyaPercent, magPercent;
+    private Mat yelMat = new Mat(), cyaMat = new Mat(), magMat = new Mat(), blurredMat = new Mat();
     // Running variable storing the parking position
     private volatile ParkingPosition position = ParkingPosition.LEFT;
 
     @Override
     public Mat processFrame(Mat input) {
+        // HSV color space should handle light variations better.
+        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
         // Noise reduction
         Imgproc.blur(input, blurredMat, new Size(5, 5));
         blurredMat = blurredMat.submat(new Rect(sleeve_pointA, sleeve_pointB));
-        // HSV colorspace should handle light variationsbetter.
-        Imgproc.cvtColor(input, input, Imgproc.COLOR_RGB2HSV);
         // Apply Morphology
         Mat kernel = Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(3, 3));
         Imgproc.morphologyEx(blurredMat, blurredMat, Imgproc.MORPH_CLOSE, kernel);
@@ -134,5 +121,11 @@ public class SleeveDetection extends OpenCvPipeline {
         colors[1] = cyaPercent;
         colors[2] = magPercent;
         return colors;
+    }
+
+    public enum ParkingPosition {
+        LEFT,
+        CENTER,
+        RIGHT
     }
 }
