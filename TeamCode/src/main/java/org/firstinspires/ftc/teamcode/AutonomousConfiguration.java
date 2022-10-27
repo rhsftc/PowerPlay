@@ -284,7 +284,6 @@ public class AutonomousConfiguration {
         telemetry.addData("Start: ", temp.getStartPosition());
         telemetry.update();
         return temp;
-//        return readWriteAutoOptions.getObject();
     }
 
     public enum AllianceColor {
