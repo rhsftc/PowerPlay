@@ -2,13 +2,15 @@ package org.firstinspires.ftc.teamcode;
 
 import android.content.Context;
 
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 /**
  * Created by Ron on 11/16/2016.
- * Modified: 10/12/2022
+ * Modified: 10/31/2022
  * <p>
  * This class provides configuration for an autonomous opMode.
  * Most games benefit from autonomous opModes that can implement
@@ -31,6 +33,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 public class AutonomousConfiguration {
     private AutonomousOptions autonomousOptions;
+    private GamepadEx gamepadEx;
     private Context context;
     private boolean readyToStart;
     private boolean savedToFile;
@@ -45,44 +48,13 @@ public class AutonomousConfiguration {
     private Telemetry.Item teleReadyToStart;
     private Telemetry.Item teleSavedToFile;
 
-    private DebouncedButton aButton;
-    private DebouncedButton bButton;
-    private DebouncedButton dPadLeft;
-    private DebouncedButton dPadRight;
-    private DebouncedButton dPadDown;
-    private DebouncedButton dPadUp;
-    private DebouncedButton leftBumper;
-    private DebouncedButton rightBumper;
-    private DebouncedButton startButton;
-    private DebouncedButton backButton;
-    private DebouncedButton xButton;
-    private DebouncedButton yButton;
-    private DebouncedButton leftStickButton;
-    private DebouncedButton rightStickButton;
-
-
     /*
      * Pass in the gamepad and telemetry from your opMode.
      */
     public void init(Gamepad gamepad, Telemetry telemetry1, Context context) {
         this.context = context;
         ReadWriteAutoOptions readWriteAutoOptions = new ReadWriteAutoOptions(context);
-        NinjaGamePad gamePad1 = new NinjaGamePad(gamepad);
-        aButton = gamePad1.getAButton().debounced();
-        bButton = gamePad1.getBButton().debounced();
-        dPadLeft = gamePad1.getDpadLeft().debounced();
-        dPadRight = gamePad1.getDpadRight().debounced();
-        dPadDown = gamePad1.getDpadDown().debounced();
-        dPadUp = gamePad1.getDpadUp().debounced();
-        rightBumper = gamePad1.getRightBumper().debounced();
-        leftBumper = gamePad1.getLeftBumper().debounced();
-        xButton = gamePad1.getXButton().debounced();
-        yButton = gamePad1.getYButton().debounced();
-        leftStickButton = gamePad1.getLeftStickButton().debounced();
-        rightStickButton = gamePad1.getRightStickButton().debounced();
-        startButton = gamePad1.getStartButton().debounced();
-        backButton = gamePad1.getBackButton().debounced();
-        //backButton=gamePad1.
+        gamepadEx = new GamepadEx(gamepad);
         this.telemetry = telemetry1;
         // See if we saved the options yet. If not, save the defaults.
         autonomousOptions = new AutonomousOptions();
@@ -144,36 +116,37 @@ public class AutonomousConfiguration {
     // Call this in the init_loop from your opMode. It will returns true if you press the
     // game pad Start.
     public void init_loop() {
+        gamepadEx.readButtons();
         //Set default options (ignore what was saved to the file.)
-        if (backButton.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.BACK)) {
             resetOptions();
         }
         //Alliance Color
-        if (xButton.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.X)) {
             autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.Blue);
             telemetry.speak("blue");
         }
 
-        if (bButton.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.B)) {
             autonomousOptions.setAllianceColor(AutonomousOptions.AllianceColor.Red);
             telemetry.speak("red");
         }
         teleAlliance.setValue(autonomousOptions.getAllianceColor());
 
         //Start Position
-        if (dPadRight.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.DPAD_RIGHT)) {
             autonomousOptions.setStartPosition(AutonomousOptions.StartPosition.Right);
             telemetry.speak("start right");
         }
 
-        if (dPadLeft.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.DPAD_LEFT)) {
             autonomousOptions.setStartPosition(AutonomousOptions.StartPosition.Left);
             telemetry.speak("start left");
         }
         teleStartPosition.setValue(autonomousOptions.getStartPosition());
 
         //Park Location
-        if (dPadUp.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.DPAD_UP)) {
             AutonomousOptions.ParkLocation parkLocation = autonomousOptions.getParklocation().getNext();
             switch (parkLocation) {
                 case None:
@@ -191,7 +164,7 @@ public class AutonomousConfiguration {
         }
 
         //Park on Signal Zone
-        if (dPadDown.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.DPAD_DOWN)) {
             AutonomousOptions.ParkOnSignalZone parkSignalZone = autonomousOptions.getParkOnSignalZone().getNext();
             switch (parkSignalZone) {
                 case Yes:
@@ -206,7 +179,7 @@ public class AutonomousConfiguration {
         }
 
         //Place cones on junction.
-        if (yButton.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.Y)) {
             AutonomousOptions.PlaceConesOnJunctions placeOnJunction = autonomousOptions.getPlaceConesOnJunctions().getNext();
             switch (placeOnJunction) {
                 case Yes:
@@ -221,7 +194,7 @@ public class AutonomousConfiguration {
         }
 
         //Place cone in terminal
-        if (aButton.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.A)) {
             AutonomousOptions.PlaceConeInTerminal placeInTerminal = autonomousOptions.getPlaceConeInTerminal().getNext();
             switch (placeInTerminal) {
                 case Yes:
@@ -235,12 +208,12 @@ public class AutonomousConfiguration {
         }
 
         // Keep range within 0-15 seconds. Wrap at either end.
-        if (leftBumper.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.LEFT_BUMPER)) {
             autonomousOptions.setDelayStartSeconds(autonomousOptions.getDelayStartSeconds() - 1);
             autonomousOptions.setDelayStartSeconds((autonomousOptions.getDelayStartSeconds() < 0) ? 15 : autonomousOptions.getDelayStartSeconds());
             telemetry.speak("delay start " + autonomousOptions.getDelayStartSeconds() + " seconds");
         }
-        if (rightBumper.getRise()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.RIGHT_BUMPER)) {
             autonomousOptions.setDelayStartSeconds(autonomousOptions.getDelayStartSeconds() + 1);
             autonomousOptions.setDelayStartSeconds((autonomousOptions.getDelayStartSeconds() > 15) ? 0 : autonomousOptions.getDelayStartSeconds());
             telemetry.speak("delay start " + autonomousOptions.getDelayStartSeconds() + " seconds");
@@ -252,7 +225,7 @@ public class AutonomousConfiguration {
         teleReadyToStart.setValue(readyToStart);
 
         //Save the options to a file if ready to start and start button is pressed.
-        if (startButton.getRise() && getReadyToStart()) {
+        if (gamepadEx.wasJustReleased(GamepadKeys.Button.START) && getReadyToStart()) {
             SaveOptions();
             savedToFile = true;
             teleSavedToFile.setValue(true);
@@ -283,74 +256,5 @@ public class AutonomousConfiguration {
         telemetry.addData("Start: ", temp.getStartPosition());
         telemetry.update();
         return temp;
-    }
-
-    public enum AllianceColor {
-        None,       //Make the driver select a color.
-        Red,
-        Blue
-    }
-
-    /*
-     * Where do we start the robot
-     * Right is on the right of your substation.
-     * Left is on the left of your substation.
-     */
-    public enum StartPosition {
-        None,
-        Left,
-        Right
-    }
-
-    /*
-     * Where do we park. Default is do not park.
-     */
-    public enum ParkLocation {
-        None,
-        Terminal,
-        SubStation;
-
-        public ParkLocation getNext() {
-            return values()[(ordinal() + 1) % values().length];
-        }
-    }
-
-    /*
-     * Yes means park on the signal zone.
-     * Default is No.
-     */
-    public enum ParkOnSignalZone {
-        No,
-        Yes;
-
-        public ParkOnSignalZone getNext() {
-            return values()[(ordinal() + 1) % values().length];
-        }
-    }
-
-    /*
-     * Yes means place cones on the junctions.
-     * Default is No.
-     */
-    public enum PlaceConesOnJunctions {
-        No,
-        Yes;
-
-        public PlaceConesOnJunctions getNext() {
-            return values()[(ordinal() + 1) % values().length];
-        }
-    }
-
-    /*
-     * Yes means place cone in the terminal.
-     *  No is the default.
-     */
-    public enum PlaceConeInTerminal {
-        No,
-        Yes;
-
-        public PlaceConeInTerminal getNext() {
-            return values()[(ordinal() + 1) % values().length];
-        }
     }
 }
