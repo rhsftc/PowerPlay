@@ -32,7 +32,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class AutonomousConfiguration {
     private AutonomousOptions autonomousOptions;
     private Context context;
-    private ReadWriteAutoOptions readWriteAutoOptions;
     private boolean readyToStart;
     private boolean savedToFile;
     private Telemetry telemetry;
@@ -67,7 +66,7 @@ public class AutonomousConfiguration {
      */
     public void init(Gamepad gamepad, Telemetry telemetry1, Context context) {
         this.context = context;
-        readWriteAutoOptions = new ReadWriteAutoOptions(context);
+        ReadWriteAutoOptions readWriteAutoOptions = new ReadWriteAutoOptions(context);
         NinjaGamePad gamePad1 = new NinjaGamePad(gamepad);
         aButton = gamePad1.getAButton().debounced();
         bButton = gamePad1.getBButton().debounced();
