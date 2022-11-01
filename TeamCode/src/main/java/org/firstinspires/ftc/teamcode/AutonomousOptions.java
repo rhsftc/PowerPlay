@@ -35,7 +35,7 @@ public class AutonomousOptions implements Serializable {
         this.startPosition = startPosition;
     }
 
-    public ParkLocation getParklocation() {
+    public ParkLocation getParkLocation() {
         return parklocation;
     }
 

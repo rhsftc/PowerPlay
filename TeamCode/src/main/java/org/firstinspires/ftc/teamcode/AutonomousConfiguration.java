@@ -76,8 +76,8 @@ public class AutonomousConfiguration {
         return autonomousOptions.getStartPosition();
     }
 
-    public AutonomousOptions.ParkLocation getParklocation() {
-        return autonomousOptions.getParklocation();
+    public AutonomousOptions.ParkLocation getParkLocation() {
+        return autonomousOptions.getParkLocation();
     }
 
     public AutonomousOptions.ParkOnSignalZone getParkOnSignalZone() {
@@ -103,7 +103,7 @@ public class AutonomousConfiguration {
     private void ShowHelp() {
         teleAlliance = telemetry.addData("X = Blue, B = Red", autonomousOptions.getAllianceColor());
         teleStartPosition = telemetry.addData("D-pad left/right, select start position", autonomousOptions.getStartPosition());
-        teleParkLocation = telemetry.addData("D-pad up to cycle park location", autonomousOptions.getParklocation());
+        teleParkLocation = telemetry.addData("D-pad up to cycle park location", autonomousOptions.getParkLocation());
         teleParkOnSignalZone = telemetry.addData("D-pad down to cycle park on signal zone", autonomousOptions.getParkOnSignalZone());
         telePlaceConesOnJunctions = telemetry.addData("Y to cycle cones on junctions", autonomousOptions.getPlaceConesOnJunctions());
         telePlaceConeInTerminal = telemetry.addData("A to cycle place cone in terminal", autonomousOptions.getPlaceConeInTerminal());
@@ -147,7 +147,7 @@ public class AutonomousConfiguration {
 
         //Park Location
         if (gamepadEx.wasJustReleased(GamepadKeys.Button.DPAD_UP)) {
-            AutonomousOptions.ParkLocation parkLocation = autonomousOptions.getParklocation().getNext();
+            AutonomousOptions.ParkLocation parkLocation = autonomousOptions.getParkLocation().getNext();
             switch (parkLocation) {
                 case None:
                     telemetry.speak("park, no.");
