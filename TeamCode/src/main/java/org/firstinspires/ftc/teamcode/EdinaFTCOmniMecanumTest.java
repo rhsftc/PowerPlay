@@ -78,10 +78,10 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
         // correspond
         // to the names assigned during the robot configuration step on the DS or RC
         // devices.
-        DcMotor leftFrontDrive = hardwareMap.get(DcMotor.class, "left_front_drive");
-        DcMotor leftBackDrive = hardwareMap.get(DcMotor.class, "left_back_drive");
-        DcMotor rightFrontDrive = hardwareMap.get(DcMotor.class, "right_front_drive");
-        DcMotor rightBackDrive = hardwareMap.get(DcMotor.class, "right_back_drive");
+        DcMotor leftFrontDrive = hardwareMap.get(DcMotor.class, "leftfrontdrive");
+        DcMotor leftBackDrive = hardwareMap.get(DcMotor.class, "leftbackdrive");
+        DcMotor rightFrontDrive = hardwareMap.get(DcMotor.class, "rightfrontdrive");
+        DcMotor rightBackDrive = hardwareMap.get(DcMotor.class, "rightbackdrive");
 
         // Most robots need the motors on one side to be reversed to drive forward.
         // When you first test your robot, push the left joystick forward
