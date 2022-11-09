@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -159,6 +158,8 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
             telemetry.addData("Test Mode", testMode);
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
+            telemetry.addData("Front Ticks Left/right", "%d, %d", leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition());
+            telemetry.addData("Back Ticks Left/right", "%d, %d", leftBackDrive.getCurrentPosition(), rightBackDrive.getCurrentPosition());
             telemetry.update();
         }
     }
