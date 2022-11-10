@@ -38,8 +38,10 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /**
@@ -73,7 +75,6 @@ public class RHSSensorColor extends LinearOpMode {
      * The colorSensor field will contain a reference to our color sensor hardware object
      */
     NormalizedColorSensor colorSensor;
-
     /**
      * The relativeLayout field is used to aid in providing interesting visual feedback
      * in this sample application; you probably *don't* need this when you use a color sensor on your
@@ -135,7 +136,7 @@ public class RHSSensorColor extends LinearOpMode {
         // xButtonPreviouslyPressed and xButtonCurrentlyPressed keep track of the previous and current
         // state of the X button on the gamepad
         boolean xButtonPreviouslyPressed = false;
-        boolean xButtonCurrentlyPressed = false;
+        boolean xButtonCurrentlyPressed;
 
         // Get a reference to our sensor object. It's recommended to use NormalizedColorSensor over
         // ColorSensor, because NormalizedColorSensor consistently gives values between 0 and 1, while
@@ -147,7 +148,6 @@ public class RHSSensorColor extends LinearOpMode {
         if (colorSensor instanceof SwitchableLight) {
             ((SwitchableLight) colorSensor).enableLight(true);
         }
-
         // Wait for the start button to be pressed.
         waitForStart();
 
@@ -156,6 +156,7 @@ public class RHSSensorColor extends LinearOpMode {
             // Explain basic gain information via telemetry
             telemetry.addLine("Hold the A button on gamepad 1 to increase gain, or B to decrease it.\n");
             telemetry.addLine("Higher gain values mean that the sensor will report larger numbers for Red, Green, and Blue, and Value\n");
+            telemetry.addData("Light", ((OpticalDistanceSensor) colorSensor).getLightDetected());
 
             // Update the gain value if either of the A or B gamepad buttons is being held
             if (gamepad1.a) {
@@ -232,8 +233,7 @@ public class RHSSensorColor extends LinearOpMode {
         // (0 - .99) Lower value results in stronger smoothing.
         final float FILTER_COEFFICIENT = .2F;
         // Used to filter out values that are way out of range. Tune for expected range.
-        final float THRESHOLD = 9F;
-
+//        final float THRESHOLD = 360F;
         // Optional code to remove outliers.
 //        if (Math.abs(colorSample - colorAverage) > THRESHOLD) {
 //            colorSample = colorAverage;
