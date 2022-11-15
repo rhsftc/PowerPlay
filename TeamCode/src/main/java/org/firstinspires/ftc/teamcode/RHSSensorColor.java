@@ -41,7 +41,6 @@ import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.SwitchableLight;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /**
@@ -142,18 +141,23 @@ public class RHSSensorColor extends LinearOpMode {
         // ColorSensor, because NormalizedColorSensor consistently gives values between 0 and 1, while
         // the values you get from ColorSensor are dependent on the specific sensor you're using.
         colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+        // Log to a file.
+        Datalog datalog;
 
         // If possible, turn the light on in the beginning (it might already be on anyway,
         // we just make sure it is if we can).
         if (colorSensor instanceof SwitchableLight) {
             ((SwitchableLight) colorSensor).enableLight(true);
         }
+
+        datalog = new Datalog("datalogcolor1");
+        telemetry.setMsTransmissionInterval(50);
+
         // Wait for the start button to be pressed.
         waitForStart();
 
         // Loop until we are asked to stop
-        while (opModeIsActive()) {
-            // Explain basic gain information via telemetry
+        for (int i = 0; opModeIsActive(); i++) {        // Explain basic gain information via telemetry
             telemetry.addLine("Hold the A button on gamepad 1 to increase gain, or B to decrease it.\n");
             telemetry.addLine("Higher gain values mean that the sensor will report larger numbers for Red, Green, and Blue, and Value\n");
             telemetry.addData("Light", ((OpticalDistanceSensor) colorSensor).getLightDetected());
@@ -200,6 +204,15 @@ public class RHSSensorColor extends LinearOpMode {
             Color.colorToHSV(colors.toColor(), hsvValues);
             hueAverage = LowPass(hueAverage, hsvValues[0]);
 
+            datalog.red.set(colors.red);
+            datalog.green.set(colors.green);
+            datalog.blue.set(colors.blue);
+            datalog.hue.set(hsvValues[0]);
+            datalog.saturation.set(hsvValues[1]);
+            datalog.value.set(hsvValues[2]);
+            datalog.value.set(colors.alpha);
+            datalog.writeLine();
+
             telemetry.addLine()
                     .addData("Red", "%.3f", colors.red)
                     .addData("Green", "%.3f", colors.green)
@@ -241,5 +254,56 @@ public class RHSSensorColor extends LinearOpMode {
 
         colorAverage = ((1.0F - FILTER_COEFFICIENT) * (FILTER_COEFFICIENT + colorSample));
         return colorAverage;
+    }
+
+    /*
+     * This class encapsulates all the fields that will go into the datalog.
+     */
+    public static class Datalog {
+        // The underlying datalogger object - it cares only about an array of loggable fields
+        private final Datalogger datalogger;
+
+        // These are all of the fields that we want in the datalog.
+        // Note that order here is NOT important. The order is important in the setFields() call below
+        public Datalogger.GenericField loopCounter = new Datalogger.GenericField("Loop Counter");
+        public Datalogger.GenericField red = new Datalogger.GenericField("Red");
+        public Datalogger.GenericField green = new Datalogger.GenericField("Green");
+        public Datalogger.GenericField blue = new Datalogger.GenericField("Blue");
+        public Datalogger.GenericField hue = new Datalogger.GenericField("Hue");
+        public Datalogger.GenericField saturation = new Datalogger.GenericField("Saturation");
+        public Datalogger.GenericField value = new Datalogger.GenericField("Value");
+        public Datalogger.GenericField alpha = new Datalogger.GenericField("Alpha");
+
+        public Datalog(String name) {
+            // Build the underlying datalog object
+            datalogger = new Datalogger.Builder()
+
+                    // Pass through the filename
+                    .setFilename(name)
+
+                    // Request an automatic timestamp field
+                    .setAutoTimestamp(Datalogger.AutoTimestamp.DECIMAL_SECONDS)
+
+                    // Tell it about the fields we care to log.
+                    // Note that order *IS* important here! The order in which we list
+                    // the fields is the order in which they will appear in the log.
+                    .setFields(
+                            loopCounter,
+                            red,
+                            green,
+                            blue,
+                            hue,
+                            saturation,
+                            value,
+                            alpha
+                    )
+                    .build();
+        }
+
+        // Tell the datalogger to gather the values of the fields
+        // and write a new line in the log.
+        public void writeLine() {
+            datalogger.writeLine();
+        }
     }
 }
