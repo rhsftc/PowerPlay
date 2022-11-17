@@ -111,6 +111,7 @@ public class AutonomousConfiguration {
         teleReadyToStart = telemetry.addData("Ready to start: ", getReadyToStart());
         teleSavedToFile = telemetry.addData("Saved to file:", savedToFile);
         telemetry.addLine("Back button resets all options.");
+        telemetry.update();
     }
 
     // Call this in the init_loop from your opMode. It will returns true if you press the
@@ -230,6 +231,7 @@ public class AutonomousConfiguration {
             savedToFile = true;
             teleSavedToFile.setValue(true);
         }
+        telemetry.update();
     }
 
     // Default selections if driver does not select anything.

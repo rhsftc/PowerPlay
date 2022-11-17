@@ -54,7 +54,6 @@ public class RHSConfigMenuLinear extends LinearOpMode {
 
         while (!opModeIsActive()) {
             autonomousConfiguration.init_loop();
-            telemetry.update();
         }
 
         telemetry.addData("Status", "Initialized");
@@ -69,6 +68,13 @@ public class RHSConfigMenuLinear extends LinearOpMode {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Alliance",autonomousConfiguration.getAlliance());
+            telemetry.addData("Start Position",autonomousConfiguration.getStartPosition());
+            telemetry.addData("Park Location",autonomousConfiguration.getParkLocation());
+            telemetry.addData("Park on Signal Zone",autonomousConfiguration.getParkOnSignalZone());
+            telemetry.addData("Place Cone in Terminal",autonomousConfiguration.getPlaceConeInTerminal());
+            telemetry.addData("Place Cones on Junction",autonomousConfiguration.getPlaceConesOnJunctions());
+            telemetry.addData("Delay Start",autonomousConfiguration.getDelayStartSeconds());
+            telemetry.addData("Ready to Start",autonomousConfiguration.getReadyToStart());
             telemetry.update();
         }
     }
