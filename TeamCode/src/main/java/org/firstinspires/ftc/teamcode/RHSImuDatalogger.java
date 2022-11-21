@@ -26,7 +26,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @TeleOp(name = "IMU Datalogger", group = "test")
-public class ConceptDatalogger extends LinearOpMode
+public class RHSImuDatalogger extends LinearOpMode
 {
     Datalog datalog;
     BNO055IMU imu;

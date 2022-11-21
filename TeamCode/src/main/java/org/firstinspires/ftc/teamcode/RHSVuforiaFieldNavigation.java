@@ -75,7 +75,7 @@ import java.util.List;
  * is explained below.
  */
 
-@TeleOp(name = "Vuforia Field Nav", group = "Test")
+@TeleOp(name = "Vuforia Field Nav", group = "test")
 //@Disabled
 public class RHSVuforiaFieldNavigation extends LinearOpMode {
 

@@ -36,7 +36,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 /**
  * Demonstrates empty OpMode
  */
-@TeleOp(name = "Gamepad", group = "Test")
+@TeleOp(name = "Gamepad", group = "test")
 //@Disabled
 public class RHSGamepadTest extends OpMode {
 

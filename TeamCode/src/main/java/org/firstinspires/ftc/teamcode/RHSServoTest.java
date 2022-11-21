@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "FTCLib Servo", group = "Test")
+@TeleOp(name = "FTCLib Servo", group = "test")
 //@Disabled
 public class RHSServoTest extends LinearOpMode {
     private final double MAX_ANGLE = 360;

@@ -8,7 +8,7 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-@Autonomous(name = "Signal Sleeve", group = "camera")
+@Autonomous(name = "Signal Sleeve Camera Color", group = "Autonomous")
 public class VisionTest extends LinearOpMode {
 
     SleeveDetection sleeveDetection = new SleeveDetection();

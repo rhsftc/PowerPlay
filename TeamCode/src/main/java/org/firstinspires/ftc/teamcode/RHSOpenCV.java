@@ -36,7 +36,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvPipeline;
 import org.openftc.easyopencv.OpenCvWebcam;
 
-@TeleOp(name = "OpenCV", group = "Test")
+@TeleOp(name = "OpenCV", group = "test")
 //@Disabled
 public class RHSOpenCV extends LinearOpMode {
     OpenCvWebcam webcam;

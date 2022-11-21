@@ -52,7 +52,7 @@ import java.util.List;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@Autonomous(name = "Signal Object Detect", group = "tensorflow")
+@Autonomous(name = "Signal Object Tensorflow", group = "Autonomous")
 //@Disabled
 public class RHSSignalDetect extends LinearOpMode {
 
