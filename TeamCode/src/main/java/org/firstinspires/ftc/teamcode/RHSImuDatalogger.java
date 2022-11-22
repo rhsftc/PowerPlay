@@ -23,25 +23,24 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 @TeleOp(name = "IMU Datalogger", group = "test")
-public class RHSImuDatalogger extends LinearOpMode
-{
+public class RHSImuDatalogger extends LinearOpMode {
     Datalog datalog;
     BNO055IMU imu;
     VoltageSensor battery;
 
     @Override
-    public void runOpMode() throws InterruptedException
-    {
+    public void runOpMode() throws InterruptedException {
         // Get devices from the hardwareMap.
         // If needed, change "Control Hub" to (e.g.) "Expansion Hub 1".
         battery = hardwareMap.voltageSensor.get("Control Hub");
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
         // Initialize the datalog
-        datalog = new Datalog("datalog_01");
+        datalog = new Datalog("datalogImu");
 
         // You do not need to fill every field of the datalog
         // every time you call writeLine(); those fields will simply
@@ -52,6 +51,8 @@ public class RHSImuDatalogger extends LinearOpMode
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.accelPowerMode = BNO055IMU.AccelPowerMode.NORMAL;
         imu.initialize(parameters);
 
         telemetry.setMsTransmissionInterval(50);
@@ -60,8 +61,7 @@ public class RHSImuDatalogger extends LinearOpMode
 
         datalog.opModeStatus.set("RUNNING");
 
-        for (int i = 0; opModeIsActive(); i++)
-        {
+        for (int i = 0; opModeIsActive(); i++) {
             // Note that the order in which we set datalog fields
             // does *not* matter! The order is configured inside
             // the Datalog class constructor.
@@ -70,6 +70,7 @@ public class RHSImuDatalogger extends LinearOpMode
             datalog.battery.set(battery.getVoltage());
 
             Orientation orientation = imu.getAngularOrientation();
+            AngularVelocity angularVelocity = imu.getAngularVelocity();
 
             datalog.yaw.set(orientation.firstAngle);
             datalog.pitch.set(orientation.secondAngle);
@@ -83,6 +84,10 @@ public class RHSImuDatalogger extends LinearOpMode
             telemetry.addData("Pitch", datalog.pitch);
             telemetry.addData("Roll", datalog.roll);
             telemetry.addLine();
+            telemetry.addData("X Rate", angularVelocity.xRotationRate);
+            telemetry.addData("Y Rate", angularVelocity.yRotationRate);
+            telemetry.addData("Z Rate", angularVelocity.zRotationRate);
+            telemetry.addLine();
             telemetry.addData("OpMode Status", datalog.opModeStatus);
             telemetry.addData("Loop Counter", datalog.loopCounter);
             telemetry.addData("Battery", datalog.battery);
@@ -93,7 +98,7 @@ public class RHSImuDatalogger extends LinearOpMode
         }
 
         /*
-         * The datalog is automatically closed and flushed to disk after 
+         * The datalog is automatically closed and flushed to disk after
          * the OpMode ends - no need to do that manually :')
          */
     }
@@ -101,22 +106,20 @@ public class RHSImuDatalogger extends LinearOpMode
     /*
      * This class encapsulates all the fields that will go into the datalog.
      */
-    public static class Datalog
-    {
+    public static class Datalog {
         // The underlying datalogger object - it cares only about an array of loggable fields
         private final Datalogger datalogger;
 
         // These are all of the fields that we want in the datalog.
         // Note that order here is NOT important. The order is important in the setFields() call below
         public Datalogger.GenericField opModeStatus = new Datalogger.GenericField("OpModeStatus");
-        public Datalogger.GenericField loopCounter  = new Datalogger.GenericField("Loop Counter");
-        public Datalogger.GenericField yaw          = new Datalogger.GenericField("Yaw");
-        public Datalogger.GenericField pitch        = new Datalogger.GenericField("Pitch");
-        public Datalogger.GenericField roll         = new Datalogger.GenericField("Roll");
-        public Datalogger.GenericField battery      = new Datalogger.GenericField("Battery");
+        public Datalogger.GenericField loopCounter = new Datalogger.GenericField("Loop Counter");
+        public Datalogger.GenericField yaw = new Datalogger.GenericField("Yaw");
+        public Datalogger.GenericField pitch = new Datalogger.GenericField("Pitch");
+        public Datalogger.GenericField roll = new Datalogger.GenericField("Roll");
+        public Datalogger.GenericField battery = new Datalogger.GenericField("Battery");
 
-        public Datalog(String name)
-        {
+        public Datalog(String name) {
             // Build the underlying datalog object
             datalogger = new Datalogger.Builder()
 
@@ -142,8 +145,7 @@ public class RHSImuDatalogger extends LinearOpMode
 
         // Tell the datalogger to gather the values of the fields
         // and write a new line in the log.
-        public void writeLine()
-        {
+        public void writeLine() {
             datalogger.writeLine();
         }
     }
