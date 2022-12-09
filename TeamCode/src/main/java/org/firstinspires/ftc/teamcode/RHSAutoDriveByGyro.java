@@ -33,6 +33,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -119,8 +120,10 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
     static final double P_TURN_GAIN = 0.02;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_GAIN = 0.03;     // Larger is more responsive, but also less stable
     /* Declare OpMode members. */
-    private DcMotor leftDrive = null;
-    private DcMotor rightDrive = null;
+    private DcMotor leftFrontDrive = null;
+    private DcMotor rightFrontDrive = null;
+    private DcMotorEx leftBackDrive = null;
+    private DcMotorEx rightBackDrive = null;
     private IMU imu = null;      // Control/Expansion Hub IMU
     private double robotHeading = 0;
     private double headingOffset = 0;
@@ -139,14 +142,18 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize the drive system variables.
-        leftDrive = hardwareMap.get(DcMotor.class, "leftbackdrive");
-        rightDrive = hardwareMap.get(DcMotor.class, "rightbackdrive");
+        leftBackDrive = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
+        rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightbackdrive");
+        leftFrontDrive = hardwareMap.get(DcMotorEx.class, "leftfrontdrive");
+        rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rightfrontdrive");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
         imu = hardwareMap.get(IMU.class, "imu");
 
@@ -160,10 +167,14 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
         // Ensure the robot is stationary.  Reset the encoders and set the motors to BRAKE mode
-        leftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        rightDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // Wait for the game to start (Display Gyro value while waiting)
         while (opModeInInit()) {
@@ -173,8 +184,10 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
         }
 
         // Set the encoders for closed loop speed control, and reset the heading.
-        leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         resetHeading();
 
         // Step through each leg of the path,
@@ -182,19 +195,19 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
         //          holdHeading() is used after turns to let the heading stabilize
         //          Add a sleep(2000) after any step to keep the telemetry data visible for review
 
-        driveStraight(DRIVE_SPEED, 24.0, 0.0, 2.5);    // Drive Forward 24"
+        driveStraight(DRIVE_SPEED, 48.0, 0.0, 15);    // Drive Forward 48"
         turnToHeading(TURN_SPEED, -45.0, 1);               // Turn  CW to -45 Degrees
         holdHeading(TURN_SPEED, -45.0, 0.5);   // Hold -45 Deg heading for a 1/2 second
 
-        driveStraight(DRIVE_SPEED, 17.0, -45.0, 2.5);  // Drive Forward 17" at -45 degrees (12"x and 12"y)
-        turnToHeading(TURN_SPEED, 45.0, 1);               // Turn  CCW  to  45 Degrees
-        holdHeading(TURN_SPEED, 45.0, 0.5);    // Hold  45 Deg heading for a 1/2 second
+//        driveStraight(DRIVE_SPEED, 17.0, -45.0, 2.5);  // Drive Forward 17" at -45 degrees (12"x and 12"y)
+//        turnToHeading(TURN_SPEED, 45.0, 1);               // Turn  CCW  to  45 Degrees
+//        holdHeading(TURN_SPEED, 45.0, 0.5);    // Hold  45 Deg heading for a 1/2 second
+//
+//        driveStraight(DRIVE_SPEED, 17.0, 45.0, 2.5);  // Drive Forward 17" at 45 degrees (-12"x and 12"y)
+//        turnToHeading(TURN_SPEED, 0.0, 1);               // Turn  CW  to 0 Degrees
+//        holdHeading(TURN_SPEED, 0.0, 1.0);    // Hold  0 Deg heading for 1 second
 
-        driveStraight(DRIVE_SPEED, 17.0, 45.0, 2.5);  // Drive Forward 17" at 45 degrees (-12"x and 12"y)
-        turnToHeading(TURN_SPEED, 0.0, 1);               // Turn  CW  to 0 Degrees
-        holdHeading(TURN_SPEED, 0.0, 1.0);    // Hold  0 Deg heading for 1 second
-
-        driveStraight(DRIVE_SPEED, -48.0, 0.0, 2.5);    // Drive in Reverse 48" (should return to approx. staring position)
+        driveStraight(DRIVE_SPEED, -48.0, 0.0, 15);    // Drive in Reverse 48" (should return to approx. staring position)
 
         telemetry.addData("Path", "Complete");
         telemetry.update();
@@ -211,7 +224,8 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
     // **********  HIGH Level driving functions.  ********************
 
     /**
-     * Method to drive in a straight line, on a fixed compass heading (angle), based on encoder counts.
+     * Method to drive in a straight line, on a fixed compass heading (angle), based on encoder counts
+     * and IMU.
      * Move will stop if either of these conditions occur:
      * 1) Move gets to the desired position
      * 2) Driver stops the opmode running.
@@ -236,15 +250,15 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
 
             // Determine new target position, and pass to motor controller
             int moveCounts = (int) (distance * COUNTS_PER_INCH);
-            leftTarget = leftDrive.getCurrentPosition() + moveCounts;
-            rightTarget = rightDrive.getCurrentPosition() + moveCounts;
+            leftTarget = leftBackDrive.getCurrentPosition() + moveCounts;
+            rightTarget = rightBackDrive.getCurrentPosition() + moveCounts;
 
             // Set Target FIRST, then turn on RUN_TO_POSITION
-            leftDrive.setTargetPosition(leftTarget);
-            rightDrive.setTargetPosition(rightTarget);
+            leftBackDrive.setTargetPosition(leftTarget);
+            rightBackDrive.setTargetPosition(rightTarget);
 
-            leftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             // Set the required driving speed  (must be positive for RUN_TO_POSITION)
             // Start driving straight, and then enter the control loop
@@ -253,7 +267,7 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
 
             // keep looping while we are still active, and BOTH motors are running.
             while (opModeIsActive() &&
-                    (leftDrive.isBusy() && rightDrive.isBusy())
+                    (leftBackDrive.isBusy() && rightBackDrive.isBusy())
                     && driveTimer.time() < driveTime) {
 
                 // Determine required steering to keep on heading
@@ -272,8 +286,8 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
 
             // Stop all motion & Turn off RUN_TO_POSITION
             moveRobot(0, 0);
-            leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
 
@@ -396,9 +410,11 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
             leftSpeed /= max;
             rightSpeed /= max;
         }
-
-        leftDrive.setPower(leftSpeed);
-        rightDrive.setPower(rightSpeed);
+        double TPS = (175/60) * COUNTS_PER_MOTOR_REV;
+        leftBackDrive.setVelocity(TPS);
+        rightBackDrive.setVelocity(TPS);
+//        leftBackDrive.setPower(leftSpeed);
+//        rightBackDrive.setPower(rightSpeed);
     }
 
     /**
@@ -411,8 +427,8 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
         if (straight) {
             telemetry.addData("Motion", "Drive Straight");
             telemetry.addData("Target Pos L:R", "%7d:%7d", leftTarget, rightTarget);
-            telemetry.addData("Actual Pos L:R", "%7d:%7d", leftDrive.getCurrentPosition(),
-                    rightDrive.getCurrentPosition());
+            telemetry.addData("Actual Pos L:R", "%7d:%7d", leftBackDrive.getCurrentPosition(),
+                    rightBackDrive.getCurrentPosition());
         } else {
             telemetry.addData("Motion", "Turning");
         }
