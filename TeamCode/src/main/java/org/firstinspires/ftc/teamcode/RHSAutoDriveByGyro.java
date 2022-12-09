@@ -39,7 +39,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
@@ -103,6 +102,7 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
     static final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
+    static final double MOTOR_RPM = 312;
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -135,6 +135,8 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
     private double turnSpeed = 0;
     private double leftSpeed = 0;
     private double rightSpeed = 0;
+    private double leftVelocity = 0;
+    private double rightVelocity = 0;
     private int leftTarget = 0;
     private int rightTarget = 0;
 
@@ -410,9 +412,12 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
             leftSpeed /= max;
             rightSpeed /= max;
         }
-        double TPS = (175/60) * COUNTS_PER_MOTOR_REV;
-        leftBackDrive.setVelocity(TPS);
-        rightBackDrive.setVelocity(TPS);
+
+        leftVelocity = PowerToTPS(leftSpeed);
+        rightVelocity = PowerToTPS(rightSpeed);
+
+        leftBackDrive.setVelocity(PowerToTPS(leftVelocity));
+        rightBackDrive.setVelocity(PowerToTPS(rightVelocity));
 //        leftBackDrive.setPower(leftSpeed);
 //        rightBackDrive.setPower(rightSpeed);
     }
@@ -435,16 +440,17 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
 
         telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
         telemetry.addData("Error:Steer", "%5.1f:%5.1f", headingError, turnSpeed);
-        telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f\n", leftSpeed, rightSpeed);
+        telemetry.addData("Wheel Speeds L:R", "%5.2f:%5.2f", leftSpeed, rightSpeed);
+        telemetry.addData("Wheel Velocities L:R", "%6.2f:%6.2f\n", leftVelocity, rightVelocity);
         // Retrieve Rotational Angles and Velocities
         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-        AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
+//        AngularVelocity angularVelocity = imu.getRobotAngularVelocity(AngleUnit.DEGREES);
         telemetry.addData("Yaw (Z)", "%.2f Deg. (Heading)", orientation.getYaw(AngleUnit.DEGREES));
         telemetry.addData("Pitch (X)", "%.2f Deg.", orientation.getPitch(AngleUnit.DEGREES));
         telemetry.addData("Roll (Y)", "%.2f Deg.\n", orientation.getRoll(AngleUnit.DEGREES));
-        telemetry.addData("Yaw (Z) velocity", "%.2f Deg/Sec", angularVelocity.zRotationRate);
-        telemetry.addData("Pitch (X) velocity", "%.2f Deg/Sec", angularVelocity.xRotationRate);
-        telemetry.addData("Roll (Y) velocity", "%.2f Deg/Sec", angularVelocity.yRotationRate);
+//        telemetry.addData("Yaw (Z) velocity", "%.2f Deg/Sec", angularVelocity.zRotationRate);
+//        telemetry.addData("Pitch (X) velocity", "%.2f Deg/Sec", angularVelocity.xRotationRate);
+//        telemetry.addData("Roll (Y) velocity", "%.2f Deg/Sec", angularVelocity.yRotationRate);
         telemetry.update();
     }
 
@@ -463,5 +469,16 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
         // Save a new heading offset equal to the current raw heading.
         headingOffset = getRawHeading();
         robotHeading = 0;
+    }
+
+    /**
+     * Convert power to velocity.
+     * double TPS = (power/60) * COUNTS_PER_MOTOR_REV;
+     *
+     * @param power A motor power within -1 to 1.
+     * @return Ticks per second for use in velocity.
+     */
+    private double PowerToTPS(double power) {
+        return ((power * MOTOR_RPM) / 60) * COUNTS_PER_MOTOR_REV;
     }
 }
