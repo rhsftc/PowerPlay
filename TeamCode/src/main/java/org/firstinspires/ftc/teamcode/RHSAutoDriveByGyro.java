@@ -120,8 +120,8 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
     static final double P_TURN_GAIN = 0.02;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_GAIN = 0.03;     // Larger is more responsive, but also less stable
     /* Declare OpMode members. */
-    private DcMotor leftFrontDrive = null;
-    private DcMotor rightFrontDrive = null;
+    private DcMotorEx leftFrontDrive = null;
+    private DcMotorEx rightFrontDrive = null;
     private DcMotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
     private IMU imu = null;      // Control/Expansion Hub IMU
@@ -417,9 +417,9 @@ public class RHSAutoDriveByGyro extends LinearOpMode {
         rightVelocity = PowerToTPS(rightSpeed);
 
         leftBackDrive.setVelocity(PowerToTPS(leftVelocity));
+        leftFrontDrive.setVelocity(PowerToTPS(leftVelocity));
         rightBackDrive.setVelocity(PowerToTPS(rightVelocity));
-//        leftBackDrive.setPower(leftSpeed);
-//        rightBackDrive.setPower(rightSpeed);
+        rightFrontDrive.setVelocity(PowerToTPS(rightVelocity));
     }
 
     /**
