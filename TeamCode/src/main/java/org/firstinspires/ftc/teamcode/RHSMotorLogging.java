@@ -49,8 +49,8 @@ public class RHSMotorLogging extends LinearOpMode {
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double COUNTS_PER_MOTOR_REV = 537.7;   // eg: GoBILDA 312 RPM Yellow Jacket
-    static final double MOTOR_RPM = 312;
+    static final double COUNTS_PER_MOTOR_REV = 384.5;   // eg: GoBILDA 435 RPM Yellow Jacket
+    static final double MOTOR_RPM = 435;
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
@@ -87,8 +87,10 @@ public class RHSMotorLogging extends LinearOpMode {
     private double rightBackVelocity = 0;
     private double leftFrontVelocity = 0;
     private double rightFrontVelocity = 0;
+
     private double leftTargetVelocity = 0;
     private double rightTargetVelocity = 0;
+
     private int leftBackTarget = 0;
     private int rightBackTarget = 0;
     private int leftFrontTarget = 0;
@@ -136,7 +138,7 @@ public class RHSMotorLogging extends LinearOpMode {
         rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         while (opModeIsActive() && !driveComplete) {
-            driveStraight(DRIVE_SPEED, 48, 15);
+            driveStraight(DRIVE_SPEED, 48, 5);
             sleep(20);
         }
     }
@@ -146,8 +148,8 @@ public class RHSMotorLogging extends LinearOpMode {
      */
     private void sendTelemetry() {
         telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("Positions L:R", "%d:%d", leftBackPosition, rightBackPosition);
-        telemetry.addData("Wheel Velocities L:R", "%6.2f:%6.2f\n", leftBackVelocity, rightBackVelocity);
+        telemetry.addData("Positions LB:RB:LF:RF", "%d:%d:%d:%d", leftBackPosition, rightBackPosition, leftFrontPosition, rightFrontPosition);
+        telemetry.addData("Wheel Velocities L:R", "%6.2f:%6.2f:%6.2f:%6.2f\n", leftBackVelocity, rightBackVelocity, leftFrontVelocity, rightFrontVelocity);
         telemetry.update();
     }
 
@@ -253,6 +255,9 @@ public class RHSMotorLogging extends LinearOpMode {
         rightBackDrive.setVelocity(PowerToTPS(rightTargetVelocity));
         rightFrontDrive.setVelocity(PowerToTPS(rightTargetVelocity));
         leftBackVelocity = leftBackDrive.getVelocity(AngleUnit.DEGREES);
+        rightBackVelocity = rightBackDrive.getVelocity(AngleUnit.DEGREES);
+        leftFrontVelocity = leftFrontDrive.getVelocity(AngleUnit.DEGREES);
+        rightFrontVelocity = rightFrontDrive.getVelocity(AngleUnit.DEGREES);
     }
 
     /**
