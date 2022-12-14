@@ -29,9 +29,13 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -69,18 +73,21 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 //@Disabled
 public class EdinaFTCOmniMecanumTest extends LinearOpMode {
     private final ElapsedTime runtime = new ElapsedTime();
+    boolean testMode = false;
+    GamepadEx gamePadEx;
 
     @Override
     public void runOpMode() {
-
+        gamePadEx = new GamepadEx(gamepad1);
+        ToggleButtonReader startToggle = new ToggleButtonReader(gamePadEx, GamepadKeys.Button.START);
         // Initialize the hardware variables. Note that the strings used here must
         // correspond
         // to the names assigned during the robot configuration step on the DS or RC
         // devices.
-        DcMotor leftFrontDrive = hardwareMap.get(DcMotor.class, "leftfrontdrive");
-        DcMotor leftBackDrive = hardwareMap.get(DcMotor.class, "leftbackdrive");
-        DcMotor rightFrontDrive = hardwareMap.get(DcMotor.class, "rightfrontdrive");
-        DcMotor rightBackDrive = hardwareMap.get(DcMotor.class, "rightbackdrive");
+        DcMotorEx leftFrontDrive = hardwareMap.get(DcMotorEx.class, "leftfrontdrive");
+        DcMotorEx leftBackDrive = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
+        DcMotorEx rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rightfrontdrive");
+        DcMotorEx rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightbackdrive");
 
         // Most robots need the motors on one side to be reversed to drive forward.
         // When you first test your robot, push the left joystick forward
@@ -91,6 +98,16 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
         rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
 
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        leftFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightFrontDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        rightBackDrive.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
         telemetry.addData("", "Use the Start button to toggle test mode.");
@@ -99,12 +116,18 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+//            gamePadEx.readButtons();
+            startToggle.readValue();
             double max;
             // Start toggles test mode to use x, a, y and b to test each motor.
-            boolean testMode = gamepad1.start;
+            testMode = startToggle.getState();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to
             // rotate.
@@ -145,13 +168,13 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
                 leftBackPower = gamepad1.a ? 1.0 : 0.0; // A gamepad
                 rightFrontPower = gamepad1.y ? 1.0 : 0.0; // Y gamepad
                 rightBackPower = gamepad1.b ? 1.0 : 0.0; // B gamepad
-            } else {
-                // Send calculated power to wheels
-                leftFrontDrive.setPower(leftFrontPower);
-                rightFrontDrive.setPower(rightFrontPower);
-                leftBackDrive.setPower(leftBackPower);
-                rightBackDrive.setPower(rightBackPower);
             }
+
+            // Send calculated power to wheels
+            leftFrontDrive.setPower(leftFrontPower);
+            rightFrontDrive.setPower(rightFrontPower);
+            leftBackDrive.setPower(leftBackPower);
+            rightBackDrive.setPower(rightBackPower);
 
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime);
