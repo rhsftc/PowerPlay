@@ -8,12 +8,14 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 
-@Autonomous(name = "Signal Sleeve Camera Color", group = "test")
+@Autonomous(name = "Signal Sleeve Test")
 public class VisionTest extends LinearOpMode {
 
-    SleeveDetection sleeveDetection = new SleeveDetection();
+    SleeveDetection sleeveDetection;
     OpenCvCamera camera;
-    String webcamName = "webcam1";
+    
+    // Name of the Webcam to be set in the config
+    String webcamName = "Webcam1";
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -22,22 +24,20 @@ public class VisionTest extends LinearOpMode {
         sleeveDetection = new SleeveDetection();
         camera.setPipeline(sleeveDetection);
 
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
+        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
             @Override
-            public void onOpened() {
-                camera.startStreaming(320, 240, OpenCvCameraRotation.SIDEWAYS_LEFT);
+            public void onOpened()
+            {
+                camera.startStreaming(320,240, OpenCvCameraRotation.SIDEWAYS_LEFT);
             }
 
             @Override
-            public void onError(int errorCode) {
-            }
+            public void onError(int errorCode) {}
         });
 
         while (!isStarted()) {
             telemetry.addData("ROTATION: ", sleeveDetection.getPosition());
-            telemetry.addData("Yellow Percent", sleeveDetection.getColorPercent()[0]);
-            telemetry.addData("Cyan Percent", sleeveDetection.getColorPercent()[1]);
-            telemetry.addData("Magenta Percent", sleeveDetection.getColorPercent()[2]);
             telemetry.update();
         }
 
