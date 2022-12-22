@@ -211,7 +211,7 @@ public class RHSMotorLogging extends LinearOpMode {
 
             // Display drive status for the driver.
             sendTelemetry();
-            datalog.position.set(leftBackPosition);
+            datalog.position.set(leftBackDrive.getTargetPositionTolerance());
             datalog.velocity.set(leftBackVelocity);
             datalog.writeLine();
         }
@@ -249,10 +249,10 @@ public class RHSMotorLogging extends LinearOpMode {
         leftTargetVelocity = PowerToTPS(leftSpeed);
         rightTargetVelocity = PowerToTPS(rightSpeed);
 
-        leftBackDrive.setVelocity(PowerToTPS(leftTargetVelocity));
-        leftFrontDrive.setVelocity(PowerToTPS(leftTargetVelocity));
-        rightBackDrive.setVelocity(PowerToTPS(rightTargetVelocity));
-        rightFrontDrive.setVelocity(PowerToTPS(rightTargetVelocity));
+        leftBackDrive.setVelocity(leftTargetVelocity);
+        leftFrontDrive.setVelocity(leftTargetVelocity);
+        rightBackDrive.setVelocity(rightTargetVelocity);
+        rightFrontDrive.setVelocity(rightTargetVelocity);
         leftBackVelocity = leftBackDrive.getVelocity(AngleUnit.DEGREES);
         rightBackVelocity = rightBackDrive.getVelocity(AngleUnit.DEGREES);
         leftFrontVelocity = leftFrontDrive.getVelocity(AngleUnit.DEGREES);
