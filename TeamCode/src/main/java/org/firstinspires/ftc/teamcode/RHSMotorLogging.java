@@ -29,6 +29,8 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -71,7 +73,7 @@ public class RHSMotorLogging extends LinearOpMode {
     /* Declare OpMode members. */
     private DcMotorEx leftFrontDrive = null;
     private DcMotorEx rightFrontDrive = null;
-    private DcMotorEx leftBackDrive = null;
+    private MotorEx leftBackDrive = null;
     private DcMotorEx rightBackDrive = null;
 
     private double driveSpeed = 0;
@@ -99,7 +101,7 @@ public class RHSMotorLogging extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
-        leftBackDrive = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
+        leftBackDrive = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightbackdrive");
         leftFrontDrive = hardwareMap.get(DcMotorEx.class, "leftfrontdrive");
         rightFrontDrive = hardwareMap.get(DcMotorEx.class, "rightfrontdrive");
@@ -109,17 +111,17 @@ public class RHSMotorLogging extends LinearOpMode {
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftFrontDrive.setDirection(DcMotorEx.Direction.REVERSE);
         rightFrontDrive.setDirection(DcMotorEx.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotorEx.Direction.REVERSE);
+        leftBackDrive.setInverted(true);
         rightBackDrive.setDirection(DcMotorEx.Direction.FORWARD);
 
         leftFrontDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         rightFrontDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        leftBackDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        leftBackDrive.setRunMode(Motor.RunMode.RawPower);
         rightBackDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         leftFrontDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         rightFrontDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        leftBackDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        leftBackDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         rightBackDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
         // Initialize the datalog
@@ -133,11 +135,11 @@ public class RHSMotorLogging extends LinearOpMode {
         runtime.reset();
         leftFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        leftBackDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         rightBackDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         while (opModeIsActive() && !driveComplete) {
-            driveStraight(DRIVE_SPEED, 48, 15);
+            driveStraight(DRIVE_SPEED, 480, 15);
             sleep(20);
         }
     }
@@ -148,7 +150,7 @@ public class RHSMotorLogging extends LinearOpMode {
     private void sendTelemetry() {
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Positions LB:RB:LF:RF", "%d:%d:%d:%d", leftBackPosition, rightBackPosition, leftFrontPosition, rightFrontPosition);
-        telemetry.addData("Wheel Velocities L:R", "%6.2f:%6.2f:%6.2f:%6.2f\n", leftBackVelocity, rightBackVelocity, leftFrontVelocity, rightFrontVelocity);
+        telemetry.addData("Wheel Velocities LB:RB:LF:RF", "%6.2f:%6.2f:%6.2f:%6.2f\n", leftBackVelocity, rightBackVelocity, leftFrontVelocity, rightFrontVelocity);
         telemetry.update();
     }
 
@@ -186,7 +188,7 @@ public class RHSMotorLogging extends LinearOpMode {
         leftFrontDrive.setTargetPosition(leftFrontTarget);
         rightFrontDrive.setTargetPosition(rightFrontTarget);
 
-        leftBackDrive.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         rightBackDrive.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         leftFrontDrive.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         rightFrontDrive.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
@@ -197,7 +199,7 @@ public class RHSMotorLogging extends LinearOpMode {
         moveRobot(maxDriveSpeed, 0);
 
         // keep looping while we are still active, and motors are running.
-        while (leftBackDrive.isBusy() &&
+        while (!leftBackDrive.atTargetPosition() &&
                 rightBackDrive.isBusy() &&
                 leftFrontDrive.isBusy() &&
                 rightFrontDrive.isBusy() &&
@@ -211,14 +213,14 @@ public class RHSMotorLogging extends LinearOpMode {
 
             // Display drive status for the driver.
             sendTelemetry();
-            datalog.position.set(leftBackDrive.getTargetPositionTolerance());
+            datalog.position.set(leftBackPosition);
             datalog.velocity.set(leftBackVelocity);
             datalog.writeLine();
         }
 
         // Stop all motion & Turn off RUN_TO_POSITION
         moveRobot(0, 0);
-        leftBackDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        leftBackDrive.setRunMode(Motor.RunMode.RawPower);
         rightBackDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         leftFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -249,11 +251,15 @@ public class RHSMotorLogging extends LinearOpMode {
         leftTargetVelocity = PowerToTPS(leftSpeed);
         rightTargetVelocity = PowerToTPS(rightSpeed);
 
-        leftBackDrive.setVelocity(leftTargetVelocity);
+        if (leftSpeed == 0) {
+            leftBackDrive.stopMotor();
+        } else {
+            leftBackDrive.set(leftSpeed);
+        }
         leftFrontDrive.setVelocity(leftTargetVelocity);
         rightBackDrive.setVelocity(rightTargetVelocity);
         rightFrontDrive.setVelocity(rightTargetVelocity);
-        leftBackVelocity = leftBackDrive.getVelocity(AngleUnit.DEGREES);
+        leftBackVelocity = leftBackDrive.getVelocity();
         rightBackVelocity = rightBackDrive.getVelocity(AngleUnit.DEGREES);
         leftFrontVelocity = leftFrontDrive.getVelocity(AngleUnit.DEGREES);
         rightFrontVelocity = rightFrontDrive.getVelocity(AngleUnit.DEGREES);
