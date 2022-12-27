@@ -66,8 +66,6 @@ public class RHSMotorLogging extends LinearOpMode {
     // We define one value when Turning (larger errors), and the other is used when Driving straight (smaller errors).
     // Increase these numbers if the heading does not corrects strongly enough (eg: a heavy robot or using tracks)
     // Decrease these numbers if the heading does not settle on the correct value (eg: very agile robot with omni wheels)
-    static final double P_TURN_GAIN = 0.02;     // Larger is more responsive, but also less stable
-    static final double P_DRIVE_GAIN = 0.03;     // Larger is more responsive, but also less stable
     Datalog datalog;
     private ElapsedTime runtime = new ElapsedTime();
     /* Declare OpMode members. */
@@ -78,29 +76,23 @@ public class RHSMotorLogging extends LinearOpMode {
 
     private double driveSpeed = 0;
     private double turnSpeed = 0;
-    private double leftSpeed = 0;
-    private double rightSpeed = 0;
+
     private int leftBackPosition = 0;
     private int rightBackPosition = 0;
     private int leftFrontPosition = 0;
     private int rightFrontPosition = 0;
+
     private double leftBackVelocity = 0;
     private double rightBackVelocity = 0;
     private double leftFrontVelocity = 0;
     private double rightFrontVelocity = 0;
 
-    private double leftTargetVelocity = 0;
-    private double rightTargetVelocity = 0;
-
-    private int leftBackTarget = 0;
-    private int rightBackTarget = 0;
-    private int leftFrontTarget = 0;
-    private int rightFrontTarget = 0;
     private boolean driveComplete = false;
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
+        telemetry.update();
         leftBackDrive = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
         rightBackDrive = hardwareMap.get(DcMotorEx.class, "rightbackdrive");
         leftFrontDrive = hardwareMap.get(DcMotorEx.class, "leftfrontdrive");
@@ -110,8 +102,8 @@ public class RHSMotorLogging extends LinearOpMode {
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
         leftFrontDrive.setDirection(DcMotorEx.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotorEx.Direction.FORWARD);
         leftBackDrive.setInverted(true);
+        rightFrontDrive.setDirection(DcMotorEx.Direction.FORWARD);
         rightBackDrive.setDirection(DcMotorEx.Direction.FORWARD);
 
         leftFrontDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -177,18 +169,21 @@ public class RHSMotorLogging extends LinearOpMode {
         rightBackPosition = rightBackDrive.getCurrentPosition();
         leftFrontPosition = leftFrontDrive.getCurrentPosition();
         rightFrontPosition = rightFrontDrive.getCurrentPosition();
-        leftBackTarget = leftBackPosition + moveCounts;
-        rightBackTarget = rightBackPosition + moveCounts;
-        leftFrontTarget = leftFrontPosition + moveCounts;
-        rightFrontTarget = rightFrontPosition + moveCounts;
+        int leftBackTarget = leftBackPosition + moveCounts;
+        int rightBackTarget = rightBackPosition + moveCounts;
+        int leftFrontTarget = leftFrontPosition + moveCounts;
+        int rightFrontTarget = rightFrontPosition + moveCounts;
 
         // Set Target FIRST, then turn on RUN_TO_POSITION
+        leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
+        leftBackDrive.setPositionCoefficient(0.05);
         leftBackDrive.setTargetPosition(leftBackTarget);
+        leftBackDrive.set(0);
+        leftBackDrive.setPositionTolerance(13);
         rightBackDrive.setTargetPosition(rightBackTarget);
         leftFrontDrive.setTargetPosition(leftFrontTarget);
         rightFrontDrive.setTargetPosition(rightFrontTarget);
 
-        leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         rightBackDrive.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         leftFrontDrive.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         rightFrontDrive.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
@@ -213,6 +208,7 @@ public class RHSMotorLogging extends LinearOpMode {
 
             // Display drive status for the driver.
             sendTelemetry();
+            datalog.target.set(leftBackTarget);
             datalog.position.set(leftBackPosition);
             datalog.velocity.set(leftBackVelocity);
             datalog.writeLine();
@@ -220,7 +216,7 @@ public class RHSMotorLogging extends LinearOpMode {
 
         // Stop all motion & Turn off RUN_TO_POSITION
         moveRobot(0, 0);
-        leftBackDrive.setRunMode(Motor.RunMode.RawPower);
+        leftBackDrive.setRunMode(Motor.RunMode.VelocityControl);
         rightBackDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         leftFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         rightFrontDrive.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -238,8 +234,8 @@ public class RHSMotorLogging extends LinearOpMode {
         driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
         turnSpeed = turn;      // save this value as a class member so it can be used by telemetry.
 
-        leftSpeed = drive - turn;
-        rightSpeed = drive + turn;
+        double leftSpeed = drive - turn;
+        double rightSpeed = drive + turn;
 
         // Scale speeds down if either one exceeds +/- 1.0;
         double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
@@ -248,18 +244,15 @@ public class RHSMotorLogging extends LinearOpMode {
             rightSpeed /= max;
         }
 
-        leftTargetVelocity = PowerToTPS(leftSpeed);
-        rightTargetVelocity = PowerToTPS(rightSpeed);
+        double leftTargetVelocity = PowerToTPS(leftSpeed);
+        double rightTargetVelocity = PowerToTPS(rightSpeed);
 
-        if (leftSpeed == 0) {
-            leftBackDrive.stopMotor();
-        } else {
-            leftBackDrive.set(leftSpeed);
-        }
+        leftBackDrive.set(leftSpeed);
         leftFrontDrive.setVelocity(leftTargetVelocity);
         rightBackDrive.setVelocity(rightTargetVelocity);
         rightFrontDrive.setVelocity(rightTargetVelocity);
         leftBackVelocity = leftBackDrive.getVelocity();
+        leftBackPosition = leftBackDrive.getCurrentPosition();
         rightBackVelocity = rightBackDrive.getVelocity(AngleUnit.DEGREES);
         leftFrontVelocity = leftFrontDrive.getVelocity(AngleUnit.DEGREES);
         rightFrontVelocity = rightFrontDrive.getVelocity(AngleUnit.DEGREES);
@@ -286,6 +279,7 @@ public class RHSMotorLogging extends LinearOpMode {
         // These are all of the fields that we want in the datalog.
         // Note that order here is NOT important. The order is important in the setFields() call below
         public Datalogger.GenericField velocity = new Datalogger.GenericField("Velocity");
+        public Datalogger.GenericField target = new Datalogger.GenericField("Target");
         public Datalogger.GenericField position = new Datalogger.GenericField("Position");
 
         public Datalog(String name) {
@@ -302,6 +296,7 @@ public class RHSMotorLogging extends LinearOpMode {
                     // Note that order *IS* important here! The order in which we list
                     // the fields is the order in which they will appear in the log.
                     .setFields(
+                            target,
                             position,
                             velocity
                     )
