@@ -29,18 +29,20 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.arcrobotics.ftclib.controller.wpilibcontroller.ArmFeedforward;
+import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import java.util.List;
 
 /**
  * Demonstrates empty OpMode
  */
-@TeleOp(name = "Motor Log", group = "test")
+@TeleOp(name = "FtcLib Motor Log", group = "test")
 //@Disabled
 public class RHSMotorLogging extends LinearOpMode {
     // Calculate the COUNTS_PER_INCH for your specific drive train.
@@ -52,16 +54,14 @@ public class RHSMotorLogging extends LinearOpMode {
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
     static final double DRIVE_SPEED = 0.2;     // Max driving speed for better distance accuracy.
+    private final ElapsedTime runtime = new ElapsedTime();
     // These are set in init.
     double countsPerMotorRev = 0;
     double motorRPM = 0;
     double countsPerInch = 0;
-
     Datalog datalog;
-    private ElapsedTime runtime = new ElapsedTime();
     private MotorEx leftBackDrive = null;
-    private DcMotorEx dcMotorEx = null;
-    private ArmFeedforward motorFeedforward = null;
+    private SimpleMotorFeedforward motorFeedforward = null;
     private double driveSpeed = 0;
     private int leftBackTarget = 0;
     private int leftBackPosition = 0;
@@ -73,10 +73,9 @@ public class RHSMotorLogging extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
-
+        // Important Step 1:  Make sure you use DcMotorEx when you instantiate your motors.
         leftBackDrive = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
-        dcMotorEx = leftBackDrive.motorEx;
-        motorFeedforward = new ArmFeedforward(10, 20, 30);
+        motorFeedforward = new SimpleMotorFeedforward(10, 20, 30);
 
         countsPerMotorRev = leftBackDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
         motorRPM = leftBackDrive.getMaxRPM();
@@ -84,6 +83,13 @@ public class RHSMotorLogging extends LinearOpMode {
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
         leftBackDrive.setInverted(true);
         leftBackDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+
+        // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        // Important Step 3: Set all Expansion hubs to use the AUTO Bulk Caching mode
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
 
         // Initialize the datalog
         // Note that the order in which we set datalog fields
@@ -95,6 +101,7 @@ public class RHSMotorLogging extends LinearOpMode {
             telemetry.addData("Counts per Rev", "%6.2f", countsPerMotorRev);
             telemetry.addData("Max RPM", "%6.2f", motorRPM);
             telemetry.addData("Counts per Inch", "%6.2f", countsPerInch);
+            telemetry.addData("Acceleration", "%6.2f", leftBackAcceleration);
             telemetry.update();
         }
 
@@ -102,6 +109,7 @@ public class RHSMotorLogging extends LinearOpMode {
         runtime.reset();
         leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         driveStraight(DRIVE_SPEED, 24, 10);
+        // Stay here to allow time to read display.
         while (opModeIsActive()) {
         }
     }
@@ -171,7 +179,7 @@ public class RHSMotorLogging extends LinearOpMode {
 
         driveSpeed = leftSpeed;
         leftBackDrive.set(driveSpeed);
-//        leftBackDrive.set(motorFeedforward.calculate(driveSpeed, 0));
+        leftBackDrive.set(motorFeedforward.calculate(driveSpeed, 0));
 
         leftBackVelocity = leftBackDrive.getVelocity();
         leftBackPosition = leftBackDrive.getCurrentPosition();
@@ -187,17 +195,6 @@ public class RHSMotorLogging extends LinearOpMode {
         datalog.distance.set(leftBackDistance);
         datalog.acceleration.set(leftBackAcceleration);
         datalog.writeLine();
-    }
-
-    /**
-     * Convert power to velocity.
-     * double TPS = (power/60) * COUNTS_PER_MOTOR_REV;
-     *
-     * @param power A motor power within -1 to 1.
-     * @return Ticks per second for use in velocity.
-     */
-    private double PowerToTPS(double power) {
-        return ((power * motorRPM) / 60) * countsPerMotorRev;
     }
 
     /*
