@@ -7,11 +7,13 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 @TeleOp(name = "Bucket Tele", group = "FtcLib")
@@ -51,6 +53,13 @@ public class RHSBucketTele extends LinearOpMode {
                 && !gamePadArm.isDown(GamepadKeys.Button.RIGHT_BUMPER);
         closeClaw = () -> !gamePadArm.isDown(GamepadKeys.Button.LEFT_BUMPER)
                 && gamePadArm.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER);
+
+        // Bulk reads
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        // Important: Set all Expansion hubs to use the AUTO Bulk Caching mode
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
 
         GamepadEx gamePadDrive = new GamepadEx(gamepad1);
         gamePadArm = new GamepadEx(gamepad2);
