@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.arcrobotics.ftclib.hardware.ServoEx;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -12,7 +11,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 public class RHSServoTest extends LinearOpMode {
     private final double MAX_ANGLE = 360;
     private final double MIN_ANGLE = 0;
-    private ServoEx servo;
+    private SimpleServo servo;
 
     @Override
     public void runOpMode() throws InterruptedException {
