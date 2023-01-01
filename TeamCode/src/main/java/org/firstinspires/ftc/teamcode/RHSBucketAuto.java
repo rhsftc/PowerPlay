@@ -1,12 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -25,13 +26,13 @@ public class RHSBucketAuto extends LinearOpMode {
     int Step_;
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
-    private String WE_CAM_NAME = "webcam1";
+    private String WEB_CAM_NAME = "webcam1";
     private SleeveDetection.ParkingPosition parkLocation;
-    private DcMotor BackleftAsDcMotor;
-    private DcMotor Backright;
-    private DcMotor FrontleftAsDcMotor;
-    private DcMotor Frontright;
-    private SimpleServo GripperServo;
+    private MotorEx backLeftDrive;
+    private MotorEx ackRightDrive;
+    private MotorEx frontLeftDrive;
+    private MotorEx frontRightDrive;
+    private SimpleServo gripperServo;
 
     /**
      * This function is executed when this Op Mode is selected from the Driver Station.
@@ -46,7 +47,7 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, WE_CAM_NAME), cameraMonitorViewId);
+        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, WEB_CAM_NAME), cameraMonitorViewId);
         sleeveDetection = new SleeveDetection();
         camera.setPipeline(sleeveDetection);
 
@@ -71,20 +72,18 @@ public class RHSBucketAuto extends LinearOpMode {
         double Shift;
         double speed_value;
 
-        BackleftAsDcMotor = hardwareMap.get(DcMotor.class, "Backleft");
-        Backright = hardwareMap.get(DcMotor.class, "Backright");
-        FrontleftAsDcMotor = hardwareMap.get(DcMotor.class, "Frontleft");
-        Frontright = hardwareMap.get(DcMotor.class, "Frontright");
-        GripperServo = new SimpleServo(hardwareMap, "GripperServo", 0, 255, AngleUnit.DEGREES);
+        backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
+        ackRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
+        frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
+        frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive");
+        MecanumDrive driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, ackRightDrive);
+        gripperServo = new SimpleServo(hardwareMap, "servo1", 0, 255, AngleUnit.DEGREES);
 
         // Put initialization blocks here.
-        GripperServo.setPosition(1);
-        BackleftAsDcMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Backright.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        FrontleftAsDcMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        Frontright.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        BackleftAsDcMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        FrontleftAsDcMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        gripperServo.setPosition(1);
+        backLeftDrive.setInverted(true);
+        frontLeftDrive.setInverted(true);
+
         Inch = 76.9230769231;
         Tile_length = Inch * 23;
         blpos = 0;
@@ -144,19 +143,19 @@ public class RHSBucketAuto extends LinearOpMode {
         brpos += brTarget;
         flpos += flTarget;
         frpos += frTarget;
-        BackleftAsDcMotor.setTargetPosition(blpos);
-        Backright.setTargetPosition(brpos);
-        FrontleftAsDcMotor.setTargetPosition(flpos);
-        Frontright.setTargetPosition(frpos);
-        BackleftAsDcMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Backright.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        FrontleftAsDcMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        Frontright.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        BackleftAsDcMotor.setPower(speed);
-        Backright.setPower(speed);
-        FrontleftAsDcMotor.setPower(speed);
-        Frontright.setPower(speed);
-        while (opModeIsActive() && BackleftAsDcMotor.isBusy() && Backright.isBusy() && FrontleftAsDcMotor.isBusy() && Frontright.isBusy()) {
+        backLeftDrive.setTargetPosition(blpos);
+        ackRightDrive.setTargetPosition(brpos);
+        frontLeftDrive.setTargetPosition(flpos);
+        frontRightDrive.setTargetPosition(frpos);
+        backLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+        ackRightDrive.setRunMode(Motor.RunMode.PositionControl);
+        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
+        backLeftDrive.set(speed);
+        ackRightDrive.set(speed);
+        frontLeftDrive.set(speed);
+        frontRightDrive.set(speed);
+        while (opModeIsActive() && !backLeftDrive.atTargetPosition() && !ackRightDrive.atTargetPosition() && !frontLeftDrive.atTargetPosition() && !frontRightDrive.atTargetPosition()) {
             idle();
         }
     }
