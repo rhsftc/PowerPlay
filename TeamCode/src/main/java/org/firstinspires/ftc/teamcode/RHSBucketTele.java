@@ -25,6 +25,9 @@ public class RHSBucketTele extends LinearOpMode {
     int HOME_POSITION = 0;
     int CONE_HEIGHT = 750;
     double MAX_POWER = 0.4;
+    double GRIPPER_OPEN = 255;
+    double GRIPPER_CLOSED = 0;
+    double GRIPPER_RANGE = 360;
 
     private MotorEx ArmMotor;
     private ElevatorFeedforward armFeedForward;
@@ -37,10 +40,10 @@ public class RHSBucketTele extends LinearOpMode {
     public void runOpMode() {
         ArmMotor = new MotorEx(hardwareMap, "armmotor", Motor.GoBILDA.RPM_435);
         armFeedForward = new ElevatorFeedforward(20,10,10);
-        MotorEx frontLeftDrive = new MotorEx(hardwareMap, "frontleftdrive", Motor.GoBILDA.RPM_435);
-        MotorEx backLeftDrive = new MotorEx(hardwareMap, "backleftdrive", Motor.GoBILDA.RPM_435);
-        MotorEx frontRightDrive = new MotorEx(hardwareMap, "frontrightdrive", Motor.GoBILDA.RPM_435);
-        MotorEx backRightDrive = new MotorEx(hardwareMap, "backrightdrive", Motor.GoBILDA.RPM_435);
+        MotorEx frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive", Motor.GoBILDA.RPM_435);
+        MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
+        MotorEx frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive", Motor.GoBILDA.RPM_435);
+        MotorEx backRightDrive = new MotorEx(hardwareMap, "rightbackbackdrive", Motor.GoBILDA.RPM_435);
         frontLeftDrive.setInverted(true);
         backLeftDrive.setInverted(true);
 
@@ -48,7 +51,7 @@ public class RHSBucketTele extends LinearOpMode {
         ArmMotor.setTargetPosition(0);
         ArmMotor.setRunMode(Motor.RunMode.PositionControl);
 
-        GripperServo = new SimpleServo( hardwareMap, "servo1", 0,255, AngleUnit.DEGREES);
+        GripperServo = new SimpleServo( hardwareMap, "servo1", 0,GRIPPER_RANGE, AngleUnit.DEGREES);
         openClaw = () -> gamePadArm.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)
                 && !gamePadArm.isDown(GamepadKeys.Button.RIGHT_BUMPER);
         closeClaw = () -> !gamePadArm.isDown(GamepadKeys.Button.LEFT_BUMPER)
@@ -85,14 +88,14 @@ public class RHSBucketTele extends LinearOpMode {
 
     public void ProcessGripper() {
         if (openClaw.getAsBoolean()) {
-            GripperServo.setPosition(0);
+            GripperServo.turnToAngle(GRIPPER_OPEN);
             sleep(100);
             ArmMotor.setTargetPosition(ArmMotor.getCurrentPosition() + CONE_HEIGHT);
             ArmMotor.set(MAX_POWER);
         }
 
         if (closeClaw.getAsBoolean()) {
-            GripperServo.setPosition(1);
+            GripperServo.turnToAngle(GRIPPER_CLOSED);
         }
     }
 
