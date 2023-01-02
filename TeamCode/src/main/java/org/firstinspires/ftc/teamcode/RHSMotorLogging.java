@@ -110,7 +110,7 @@ public class RHSMotorLogging extends LinearOpMode {
         leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         driveStraight(DRIVE_SPEED, 24, 10);
         // Stay here to allow time to read display.
-        while (opModeIsActive()) {
+        while (opModeIsActive() && !isStopRequested()) {
         }
     }
 

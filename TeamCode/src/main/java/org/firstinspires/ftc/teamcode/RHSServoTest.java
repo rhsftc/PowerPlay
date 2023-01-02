@@ -17,6 +17,7 @@ public class RHSServoTest extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         servo = new SimpleServo(hardwareMap, "servo1", MIN_ANGLE, MAX_ANGLE);
         servo.setRange(MIN_ANGLE, MAX_ANGLE, AngleUnit.DEGREES);
+        servo.setInverted(true);
         telemetry.addData("Servo", servo.getDeviceType());
         telemetry.update();
         waitForStart();
@@ -26,10 +27,15 @@ public class RHSServoTest extends LinearOpMode {
             } else if (gamepad1.dpad_right) {
                 servo.turnToAngle(90, AngleUnit.DEGREES);
             } else if (gamepad1.dpad_down) {
-                servo.turnToAngle(5, AngleUnit.DEGREES);
+                servo.turnToAngle(180, AngleUnit.DEGREES);
             } else if (gamepad1.dpad_up) {
-                servo.turnToAngle(355, AngleUnit.DEGREES);
+                servo.turnToAngle(360, AngleUnit.DEGREES);
+            } else if (gamepad1.x) {
+                servo.setPosition(0);
+            } else if (gamepad1.y) {
+                servo.setPosition(1);
             }
+
             telemetry.addData("Angle", servo.getAngle());
             telemetry.addData("Position", servo.getPosition());
             telemetry.update();

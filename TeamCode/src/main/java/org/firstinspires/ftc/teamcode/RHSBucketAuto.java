@@ -1,9 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -34,7 +32,8 @@ public class RHSBucketAuto extends LinearOpMode {
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
-    static final double DRIVE_SPEED = 0.2;     // Max driving speed for better distance accuracy.
+    static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
+    static final double TURN_SPEED = 0.4;
     // Define the Proportional control coefficient (or GAIN) for "heading control".
     // We define one value when Turning (larger errors), and the other is used when Driving straight (smaller errors).
     // Increase these numbers if the heading does not corrects strongly enough (eg: a heavy robot or using tracks)
@@ -45,14 +44,11 @@ public class RHSBucketAuto extends LinearOpMode {
     // Requiring more accuracy (a smaller number) will often make the turn take longer to get into the final position.
     static final double HEADING_THRESHOLD = 1.0;
 
-    int blpos;
-    int brpos;
-    int flpos;
-    int frpos;
-    int Step_;
-    double GRIPPER_OPEN = 255;
-    double GRIPPER_CLOSED = 0;
-    double GRIPPER_RANGE = 360;
+    int pathSegment;
+    private double GRIPPER_MIN_ANGLE = 0;
+    private double GRIPPER_MAX_ANGLE = 360;
+    private double GRIPPER_OPEN = 255;
+    private double GRIPPER_CLOSED = 0;
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
     private IMU imu;
@@ -116,99 +112,58 @@ public class RHSBucketAuto extends LinearOpMode {
             }
         });
 
-        while (!isStarted()) {
-            telemetry.addData("ROTATION: ", sleeveDetection.getPosition());
-            telemetry.update();
-        }
-
-        double Inch;
-        double Tile_length;
-        double Shift;
-        double speed_value;
-
         backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
         backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
         frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
         frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive");
         backLeftDrive.setInverted(true);
         frontLeftDrive.setInverted(true);
-        MecanumDrive driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
-        gripperServo = new SimpleServo(hardwareMap, "servo1", 0, GRIPPER_RANGE, AngleUnit.DEGREES);
-        gripperServo.turnToAngle(GRIPPER_OPEN);
+//        MecanumDrive driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
+        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
+        motorRPM = backLeftDrive.getMaxRPM();
+        countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
-        Inch = 76.9230769231;
-        Tile_length = Inch * 23;
-        blpos = 0;
-        brpos = 0;
-        flpos = 0;
-        frpos = 0;
-        Step_ = 1;
-        Shift = Tile_length + Inch * 5;
-        speed_value = .25;
+        gripperServo = new SimpleServo(hardwareMap, "servo1", GRIPPER_MIN_ANGLE, GRIPPER_MAX_ANGLE);
+        gripperServo.setRange(GRIPPER_CLOSED, GRIPPER_OPEN);
+        openGripper();
+
+        // Check the camera during init.
+        while (!isStarted()) {
+            parkLocation = getParkLocation();
+            telemetry.addData("Park Location: ", parkLocation);
+            telemetry.update();
+        }
+
+        pathSegment = 1;
+
         waitForStart();
-        // move away from wall to the left
-        while (opModeIsActive()) {
-            switch (Step_) {
+
+        while (opModeIsActive() && !isStopRequested()) {
+            switch (pathSegment) {
                 case 1:
-                    parkLocation = getParkLocation();
-                    Step_ = 2;
+                    driveStraight(DRIVE_SPEED, 18, 0, 3);
+                    pathSegment = 2;
                     break;
                 case 2:
-                    drive(Tile_length + Inch * 5, Tile_length + Inch * 5, Tile_length + Inch * 5, Tile_length + Inch * 5, speed_value);
-                    Step_ = 3;
+                    if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
+                        turnToHeading(TURN_SPEED, 90, 2);
+                        holdHeading(TURN_SPEED, 90, 1);
+                        driveStraight(DRIVE_SPEED, 12, 90, 3);
+                    } else if (parkLocation == SleeveDetection.ParkingPosition.CENTER) {
+                    } else if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
+                        turnToHeading(TURN_SPEED, -90, 2);
+                        holdHeading(TURN_SPEED, 90, 1);
+                        driveStraight(DRIVE_SPEED, 12, -90, 3);
+                    }
+                    pathSegment = 3;
                     break;
                 case 3:
-                    if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
-                        drive(Shift * 1, Shift * -1, Shift * -1, Shift * 1, 0.5);
-                        drive(Inch * 3, Inch * 3, Inch * 3, Inch * 3, 1);
-                        requestOpModeStop();
-                    } else if (parkLocation == SleeveDetection.ParkingPosition.CENTER) {
-                        drive(Inch * 3, Inch * 3, Inch * 3, Inch * 3, 1);
-                        requestOpModeStop();
-                    } else {
-                        if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
-                            drive(Inch * -1, Inch * -1, Inch * -1, Inch * -1, 1);
-                            drive(Shift * -1, Shift * 1, Shift * 1, Shift * -1, 0.2);
-                            drive(Inch * 4, Inch * 4, Inch * 4, Inch * 4, 1);
-                            requestOpModeStop();
-                        } else {
-                            requestOpModeStop();
-                        }
-                    }
-                    Step_ = 4;
-                    break;
-                case 4:
                     telemetry.addData("Status", "Path complete.");
                     telemetry.update();
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected value: " + Step_);
+                    throw new IllegalStateException("Unexpected value: " + pathSegment);
             }
-        }
-    }
-
-    /**
-     * Describe this function...
-     */
-    private void drive(double blTarget, double brTarget, double flTarget, double frTarget, double speed) {
-        blpos += blTarget;
-        brpos += brTarget;
-        flpos += flTarget;
-        frpos += frTarget;
-        backLeftDrive.setTargetPosition(blpos);
-        backRightDrive.setTargetPosition(brpos);
-        frontLeftDrive.setTargetPosition(flpos);
-        frontRightDrive.setTargetPosition(frpos);
-        backLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-        backRightDrive.setRunMode(Motor.RunMode.PositionControl);
-        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
-        backLeftDrive.set(speed);
-        backRightDrive.set(speed);
-        frontLeftDrive.set(speed);
-        frontRightDrive.set(speed);
-        while (opModeIsActive() && !backLeftDrive.atTargetPosition() && !backRightDrive.atTargetPosition() && !frontLeftDrive.atTargetPosition() && !frontRightDrive.atTargetPosition()) {
-            idle();
         }
     }
 
@@ -238,12 +193,17 @@ public class RHSBucketAuto extends LinearOpMode {
      * @param heading       Absolute Heading Angle (in Degrees) relative to last gyro reset.
      *                      0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
      *                      If a relative angle is required, add/subtract from the current robotHeading.
+     * @param driveTime     Time limit for drive operation. Seconds.
      */
     public void driveStraight(double maxDriveSpeed,
                               double distance,
-                              double heading) {
+                              double heading,
+                              double driveTime) {
 
-        // Ensure that the opmode is still active
+        ElapsedTime driveTimer = new ElapsedTime();
+        driveTimer.reset();
+
+        // Ensure that the op mode is still active
         if (opModeIsActive()) {
             // Determine new target position, and pass to motor controller
             int moveCounts = (int) (distance * countsPerInch);
@@ -264,7 +224,8 @@ public class RHSBucketAuto extends LinearOpMode {
 
             // keep looping while we are still active, and BOTH motors are running.
             while (opModeIsActive() &&
-                    (!backLeftDrive.atTargetPosition() && !backRightDrive.atTargetPosition())) {
+                    (!backLeftDrive.atTargetPosition() && !backRightDrive.atTargetPosition()) &&
+                    driveTimer.time() < driveTime) {
 
                 // Determine required steering to keep on heading
                 turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
@@ -282,8 +243,6 @@ public class RHSBucketAuto extends LinearOpMode {
 
             // Stop all motion & Turn off RUN_TO_POSITION
             moveRobot(0, 0);
-            backLeftDrive.setRunMode(MotorEx.RunMode.PositionControl);
-            backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
         }
     }
 
@@ -297,14 +256,19 @@ public class RHSBucketAuto extends LinearOpMode {
      * @param heading      Absolute Heading Angle (in Degrees) relative to last gyro reset.
      *                     0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
      *                     If a relative angle is required, add/subtract from current heading.
+     * @param turnTime     Time limit (seconds) to complete turn.
      */
-    public void turnToHeading(double maxTurnSpeed, double heading) {
+    public void turnToHeading(double maxTurnSpeed, double heading, double turnTime) {
+        ElapsedTime turnTimer = new ElapsedTime();
+        turnTimer.reset();
 
         // Run getSteeringCorrection() once to pre-calculate the current error
         getSteeringCorrection(heading, P_DRIVE_GAIN);
 
         // keep looping while we are still active, and not on heading.
-        while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
+        while (opModeIsActive() &&
+                (Math.abs(headingError) > HEADING_THRESHOLD) &&
+                turnTimer.time() < turnTime) {
 
             // Determine required steering to keep on heading
             turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
@@ -415,7 +379,7 @@ public class RHSBucketAuto extends LinearOpMode {
      * @param straight Set to true if we are driving straight, and the encoder positions should be included in the telemetry.
      */
     private void sendTelemetry(boolean straight) {
-
+        telemetry.addData("Path Segment", pathSegment);
         if (straight) {
             telemetry.addData("Motion", "Drive Straight");
             telemetry.addData("Target Pos L:R", "%7d:%7d", leftTarget, rightTarget);
@@ -429,6 +393,7 @@ public class RHSBucketAuto extends LinearOpMode {
         telemetry.addData("Error:Steer", "%5.1f:%5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
         telemetry.update();
+        sleep(3000);
     }
 
     /**
@@ -448,4 +413,11 @@ public class RHSBucketAuto extends LinearOpMode {
         robotHeading = 0;
     }
 
+    public void openGripper() {
+        gripperServo.setPosition(1);
+    }
+
+    public void closeGripper() {
+        gripperServo.setPosition(0);
+    }
 }
