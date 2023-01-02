@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -58,6 +59,7 @@ public class RHSBucketAuto extends LinearOpMode {
     private MotorEx backRightDrive;
     private MotorEx frontLeftDrive;
     private MotorEx frontRightDrive;
+    private MecanumDrive driveRobot;
     private SimpleServo gripperServo;
     // These are set in init.
     private double countsPerMotorRev = 0;
@@ -119,7 +121,7 @@ public class RHSBucketAuto extends LinearOpMode {
         backLeftDrive.setInverted(true);
         frontLeftDrive.setInverted(true);
 //TODO Test with mecanum drive
-// MecanumDrive driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
+        driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
         countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
         motorRPM = backLeftDrive.getMaxRPM();
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
@@ -370,8 +372,10 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-        backLeftDrive.set(leftSpeed);
-        backRightDrive.set(rightSpeed);
+        driveRobot.driveWithMotorPowers(leftSpeed, rightSpeed, leftSpeed, rightSpeed);
+
+//        backLeftDrive.set(leftSpeed);
+//        backRightDrive.set(rightSpeed);
     }
 
     /**
