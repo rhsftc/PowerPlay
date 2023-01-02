@@ -35,7 +35,6 @@ public class RHSBucketTele extends LinearOpMode {
     private SimpleServo GripperServo;
     private BooleanSupplier openClaw;
     private BooleanSupplier closeClaw;
-//Whole Code Notes: Look at block code for denominator info.
 
     public void runOpMode() {
         ArmMotor = new MotorEx(hardwareMap, "armmotor", Motor.GoBILDA.RPM_435);
