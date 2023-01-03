@@ -65,6 +65,7 @@ public class RHSBucketAuto extends LinearOpMode {
     private double countsPerMotorRev = 0;
     private double motorRPM = 0;
     private double countsPerInch = 0;
+
     private int leftTarget = 0;
     private int rightTarget = 0;
     private double turnSpeed = 0;
@@ -120,8 +121,9 @@ public class RHSBucketAuto extends LinearOpMode {
         frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive");
         backLeftDrive.setInverted(true);
         frontLeftDrive.setInverted(true);
-//TODO Test with mecanum drive
+
         driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
+
         countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
         motorRPM = backLeftDrive.getMaxRPM();
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
