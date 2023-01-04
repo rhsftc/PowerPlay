@@ -6,11 +6,13 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
+import java.util.List;
 import java.util.function.BooleanSupplier;
 
 
@@ -24,7 +26,7 @@ public class RHSBucketTele extends LinearOpMode {
     static final int HIGH_JUNCTION = 34;
     static final int HOME_POSITION = 1;
     static final int CONE_HEIGHT = 5;
-    static final int ADJUST_ARM_INCREMENT = 100;
+    static final int ADJUST_ARM_INCREMENT = 1;
     static final double MAX_POWER = 0.4;
     static final double GRIPPER_OPEN = 255;
     static final double GRIPPER_CLOSED = 0;
@@ -37,6 +39,7 @@ public class RHSBucketTele extends LinearOpMode {
     private SimpleServo GripperServo;
     private BooleanSupplier openClaw;
     private BooleanSupplier closeClaw;
+    private int armTarget = 0;
     // These are set in init.
     private double countsPerMotorRev = 0;
     private double motorRPM = 0;
@@ -70,14 +73,12 @@ public class RHSBucketTele extends LinearOpMode {
         closeClaw = () -> !gamePadArm.isDown(GamepadKeys.Button.LEFT_BUMPER)
                 && gamePadArm.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER);
 
-/*
         // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
         // Important: Set all Expansion hubs to use the AUTO Bulk Caching mode
         for (LynxModule module : allHubs) {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
-*/
 
         gamePadDrive = new GamepadEx(gamepad1);
         gamePadArm = new GamepadEx(gamepad2);
@@ -99,8 +100,10 @@ public class RHSBucketTele extends LinearOpMode {
             ProcessArm();
             ProcessGripper();
 
-            telemetry.addData("Ticks", ArmMotor.getCurrentPosition());
-            telemetry.addData("Servo", GripperServo.getPosition());
+            telemetry.addData("Counts/inch", countsPerInch);
+            telemetry.addData("Target Position", "%d", armTarget);
+            telemetry.addData("Current Position", ArmMotor.getCurrentPosition());
+            telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
             telemetry.update();
         }
     }
@@ -149,41 +152,37 @@ public class RHSBucketTele extends LinearOpMode {
     }
 
     public void moveArm(ArmPosition position) {
-        int moveCounts;
+        int currentPosition = ArmMotor.getCurrentPosition();
         switch (position) {
             case ground:
-                moveCounts = HOME_POSITION * (int) countsPerInch;
+                armTarget = HOME_POSITION * (int) countsPerInch;
                 break;
             case low:
-                moveCounts = (LOW_JUNCTION * (int) countsPerInch);
+                armTarget = (LOW_JUNCTION * (int) countsPerInch);
                 break;
             case medium:
-                moveCounts = (MEDIUM_JUNCTION * (int) countsPerInch);
+                armTarget = (MEDIUM_JUNCTION * (int) countsPerInch);
                 break;
             case high:
-                moveCounts = (HIGH_JUNCTION * (int) countsPerInch);
+                armTarget = (HIGH_JUNCTION * (int) countsPerInch);
                 break;
             case adjustUp:
-                moveCounts = ADJUST_ARM_INCREMENT;
+                armTarget = currentPosition + (ADJUST_ARM_INCREMENT * (int) countsPerInch);
                 break;
             case adjustDown:
-                moveCounts = -ADJUST_ARM_INCREMENT;
+                armTarget = currentPosition - (ADJUST_ARM_INCREMENT * (int) countsPerInch);
                 break;
             default:
-                moveCounts = 0;
+                armTarget = 0;
         }
 
+        // Prevent arm moving below HOME_POSITION
+        armTarget = Math.max(armTarget, HOME_POSITION);
         ArmMotor.setRunMode(Motor.RunMode.PositionControl);
-        if (ArmMotor.getCurrentPosition() > HOME_POSITION && GripperServo.getPosition() <= 0.2) {
-            ArmMotor.setTargetPosition(ArmMotor.getCurrentPosition() + (moveCounts - ArmMotor.getCurrentPosition()));
-        } else {
-            ArmMotor.setTargetPosition(ArmMotor.getCurrentPosition() + moveCounts);
-        }
+        ArmMotor.setTargetPosition(armTarget);
 
-        double velocity = armFeedForward.calculate(MAX_POWER);
         while (!ArmMotor.atTargetPosition()) {
-            ArmMotor.set(velocity);
-            telemetry.update();
+            ArmMotor.set(armFeedForward.calculate(MAX_POWER));
         }
 
         ArmMotor.stopMotor();
