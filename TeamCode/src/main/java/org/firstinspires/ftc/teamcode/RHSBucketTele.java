@@ -57,7 +57,7 @@ public class RHSBucketTele extends LinearOpMode {
         frontLeftDrive.setInverted(true);
         backLeftDrive.setInverted(true);
 
-        ArmMotor.setInverted(true);
+        ArmMotor.setInverted(false);
         ArmMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         ArmMotor.setPositionCoefficient(.05);
         ArmMotor.setPositionTolerance(10);
@@ -111,7 +111,6 @@ public class RHSBucketTele extends LinearOpMode {
     public void ProcessGripper() {
         if (openClaw.getAsBoolean()) {
             GripperServo.turnToAngle(GRIPPER_OPEN);
-            sleep(100);
             moveArm(ArmPosition.ground);
         }
 
