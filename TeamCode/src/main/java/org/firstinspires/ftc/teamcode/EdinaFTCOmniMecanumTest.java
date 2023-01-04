@@ -73,12 +73,14 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class EdinaFTCOmniMecanumTest extends LinearOpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     boolean testMode = false;
+    boolean motorForward = true;
     GamepadEx gamePadEx;
 
     @Override
     public void runOpMode() {
         gamePadEx = new GamepadEx(gamepad1);
         ToggleButtonReader startToggle = new ToggleButtonReader(gamePadEx, GamepadKeys.Button.START);
+        ToggleButtonReader directionToggle = new ToggleButtonReader(gamePadEx, GamepadKeys.Button.LEFT_BUMPER);
         // Initialize the hardware variables. Note that the strings used here must
         // correspond
         // to the names assigned during the robot configuration step on the DS or RC
@@ -110,6 +112,7 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
         telemetry.addData("", "Use the Start button to toggle test mode.");
+        telemetry.addData("", "Use left bumper to toggle direction.");
         telemetry.addData("", "Use X, A, Y or B to run each motor forward.");
         telemetry.update();
 
@@ -126,6 +129,8 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
             double max;
             // Start toggles test mode to use x, a, y and b to test each motor.
             testMode = startToggle.getState();
+            // Switch motor direction.
+            motorForward = directionToggle.getState();
 
             // POV Mode uses left joystick to go forward & strafe, and right joystick to
             // rotate.
@@ -162,10 +167,11 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
             // 2) Then make sure they run in the correct direction by modifying the
             // the setDirection() calls above.
             if (testMode) {
-                leftFrontPower = gamepad1.x ? 1.0 : 0.0; // X gamepad
-                leftBackPower = gamepad1.a ? 1.0 : 0.0; // A gamepad
-                rightFrontPower = gamepad1.y ? 1.0 : 0.0; // Y gamepad
-                rightBackPower = gamepad1.b ? 1.0 : 0.0; // B gamepad
+                double power = (motorForward) ? 1.0 : -1.0;
+                leftFrontPower = gamepad1.x ? power : 0.0; // X gamepad
+                leftBackPower = gamepad1.a ? power : 0.0; // A gamepad
+                rightFrontPower = gamepad1.y ? power : 0.0; // Y gamepad
+                rightBackPower = gamepad1.b ? power : 0.0; // B gamepad
             }
 
             // Send calculated power to wheels
