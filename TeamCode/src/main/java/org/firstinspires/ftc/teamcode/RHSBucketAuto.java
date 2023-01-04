@@ -1,8 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -60,6 +62,7 @@ public class RHSBucketAuto extends LinearOpMode {
     private MotorEx frontLeftDrive;
     private MotorEx frontRightDrive;
     private MecanumDrive driveRobot;
+    private SimpleMotorFeedforward simpleFeedForward;
     private SimpleServo gripperServo;
     // These are set in init.
     private double countsPerMotorRev = 0;
@@ -115,10 +118,16 @@ public class RHSBucketAuto extends LinearOpMode {
             }
         });
 
+        simpleFeedForward = new SimpleMotorFeedforward(10, 20);
         backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
         backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
         frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
         frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive");
+        backLeftDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        backRightDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        frontLeftDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        frontRightDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+
         backLeftDrive.setInverted(true);
         frontLeftDrive.setInverted(true);
 
@@ -374,10 +383,11 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-        driveRobot.driveWithMotorPowers(leftSpeed, rightSpeed, leftSpeed, rightSpeed);
-
-//        backLeftDrive.set(leftSpeed);
-//        backRightDrive.set(rightSpeed);
+//        driveRobot.driveWithMotorPowers(leftSpeed, rightSpeed, leftSpeed, rightSpeed);
+        driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
+                simpleFeedForward.calculate( rightSpeed,10),
+                simpleFeedForward.calculate(leftSpeed, 10),
+                simpleFeedForward.calculate( rightSpeed,10));
     }
 
     /**
