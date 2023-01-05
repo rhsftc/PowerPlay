@@ -385,9 +385,13 @@ public class RHSBucketAuto extends LinearOpMode {
 
 //        driveRobot.driveWithMotorPowers(leftSpeed, rightSpeed, leftSpeed, rightSpeed);
         driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
-                simpleFeedForward.calculate( rightSpeed,10),
+                simpleFeedForward.calculate(rightSpeed, 10),
                 simpleFeedForward.calculate(leftSpeed, 10),
-                simpleFeedForward.calculate( rightSpeed,10));
+                simpleFeedForward.calculate(rightSpeed, 10));
+    }
+
+    public void strafeRobot(double speed, double distance, double heading) {
+        driveRobot.driveFieldCentric(speed, 0, 0,heading);
     }
 
     /**
@@ -410,7 +414,6 @@ public class RHSBucketAuto extends LinearOpMode {
         telemetry.addData("Error:Steer", "%5.1f:%5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
         telemetry.update();
-        sleep(3000);
     }
 
     /**
