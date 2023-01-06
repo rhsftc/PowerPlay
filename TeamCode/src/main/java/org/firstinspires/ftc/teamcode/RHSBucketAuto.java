@@ -52,6 +52,7 @@ public class RHSBucketAuto extends LinearOpMode {
     private double GRIPPER_MAX_ANGLE = 360;
     private double GRIPPER_OPEN = 255;
     private double GRIPPER_CLOSED = 0;
+    private int STRAFE_TIMEOUT = 3;     //Time to wait for strafing to finish.
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
     private IMU imu;
@@ -162,13 +163,13 @@ public class RHSBucketAuto extends LinearOpMode {
                     break;
                 case 2:
                     if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
-                        strafeRobot(DRIVE_SPEED, -12);
+                        strafeRobot(DRIVE_SPEED, -12, STRAFE_TIMEOUT);
 //                        turnToHeading(TURN_SPEED, 90, 2);
 //                        holdHeading(TURN_SPEED, 90, 1);
 //                        driveStraight(DRIVE_SPEED, 12, 90, 3);
                     } else if (parkLocation == SleeveDetection.ParkingPosition.CENTER) {
                     } else if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
-                        strafeRobot(DRIVE_SPEED, 12);
+                        strafeRobot(DRIVE_SPEED, 12, STRAFE_TIMEOUT);
 //                        turnToHeading(TURN_SPEED, -90, 2);
 //                        holdHeading(TURN_SPEED, 90, 1);
 //                        driveStraight(DRIVE_SPEED, 12, -90, 3);
@@ -396,8 +397,12 @@ public class RHSBucketAuto extends LinearOpMode {
     /* Strafe left or right.
      * @param strafeSpeed - Drive speed.
      * @param distance - Distance in inches. Negative moves left, positive moves right.
+     * @param strafeTime - Timeout seconds.
      * */
-    public void strafeRobot(double strafeSpeed, double distance) {
+    public void strafeRobot(double strafeSpeed, double distance, int strafeTime) {
+        ElapsedTime strafeTimer = new ElapsedTime();
+        strafeTimer.reset();
+
         int moveCounts = (int) (distance * countsPerInch);
         backLeftTarget = backLeftDrive.getCurrentPosition() - moveCounts;
         backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
@@ -419,7 +424,8 @@ public class RHSBucketAuto extends LinearOpMode {
         while (!backLeftDrive.atTargetPosition() &&
                 !backRightDrive.atTargetPosition() &&
                 !frontLeftDrive.atTargetPosition() &&
-                !frontRightDrive.atTargetPosition()) {
+                !frontRightDrive.atTargetPosition() &&
+                strafeTimer.seconds() < strafeTime) {
         }
 
         driveRobot.driveRobotCentric(0, 0, 0);
