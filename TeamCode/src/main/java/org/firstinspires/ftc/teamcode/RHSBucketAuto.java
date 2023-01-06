@@ -69,8 +69,10 @@ public class RHSBucketAuto extends LinearOpMode {
     private double motorRPM = 0;
     private double countsPerInch = 0;
 
-    private int leftTarget = 0;
-    private int rightTarget = 0;
+    private int backLeftTarget = 0;
+    private int backRightTarget = 0;
+    private int frontLeftTarget = 0;
+    private int frontRightTarget = 0;
     private double turnSpeed = 0;
     private double driveSpeed = 0;
     private double leftSpeed = 0;
@@ -160,14 +162,16 @@ public class RHSBucketAuto extends LinearOpMode {
                     break;
                 case 2:
                     if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
-                        turnToHeading(TURN_SPEED, 90, 2);
-                        holdHeading(TURN_SPEED, 90, 1);
-                        driveStraight(DRIVE_SPEED, 12, 90, 3);
+                        strafeRobot(DRIVE_SPEED, -12);
+//                        turnToHeading(TURN_SPEED, 90, 2);
+//                        holdHeading(TURN_SPEED, 90, 1);
+//                        driveStraight(DRIVE_SPEED, 12, 90, 3);
                     } else if (parkLocation == SleeveDetection.ParkingPosition.CENTER) {
                     } else if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
-                        turnToHeading(TURN_SPEED, -90, 2);
-                        holdHeading(TURN_SPEED, 90, 1);
-                        driveStraight(DRIVE_SPEED, 12, -90, 3);
+                        strafeRobot(DRIVE_SPEED, 12);
+//                        turnToHeading(TURN_SPEED, -90, 2);
+//                        holdHeading(TURN_SPEED, 90, 1);
+//                        driveStraight(DRIVE_SPEED, 12, -90, 3);
                     }
                     pathSegment = 3;
                     break;
@@ -221,12 +225,12 @@ public class RHSBucketAuto extends LinearOpMode {
         if (opModeIsActive()) {
             // Determine new target position, and pass to motor controller
             int moveCounts = (int) (distance * countsPerInch);
-            leftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-            rightTarget = backRightDrive.getCurrentPosition() + moveCounts;
+            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
+            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
 
             // Set Target FIRST, then turn on RUN_TO_POSITION
-            backLeftDrive.setTargetPosition(leftTarget);
-            backRightDrive.setTargetPosition(rightTarget);
+            backLeftDrive.setTargetPosition(backLeftTarget);
+            backRightDrive.setTargetPosition(backRightTarget);
 
             backLeftDrive.setRunMode(MotorEx.RunMode.PositionControl);
             backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
@@ -383,15 +387,42 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-//        driveRobot.driveWithMotorPowers(leftSpeed, rightSpeed, leftSpeed, rightSpeed);
         driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
                 simpleFeedForward.calculate(rightSpeed, 10),
                 simpleFeedForward.calculate(leftSpeed, 10),
                 simpleFeedForward.calculate(rightSpeed, 10));
     }
 
-    public void strafeRobot(double speed, double distance, double heading) {
-        driveRobot.driveFieldCentric(speed, 0, 0,heading);
+    /* Strafe left or right.
+     * @param strafeSpeed - Drive speed.
+     * @param distance - Distance in inches. Negative moves left, positive moves right.
+     * */
+    public void strafeRobot(double strafeSpeed, double distance) {
+        int moveCounts = (int) (distance * countsPerInch);
+        backLeftTarget = backLeftDrive.getCurrentPosition() - moveCounts;
+        backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
+        frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
+        frontRightTarget = frontRightDrive.getCurrentPosition() - moveCounts;
+
+        // Set Target FIRST, then turn on RUN_TO_POSITION
+        backLeftDrive.setTargetPosition(backLeftTarget);
+        backRightDrive.setTargetPosition(backRightTarget);
+        frontLeftDrive.setTargetPosition(frontLeftTarget);
+        frontRightDrive.setTargetPosition(frontRightTarget);
+
+        backLeftDrive.setRunMode(MotorEx.RunMode.PositionControl);
+        backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
+        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
+        driveRobot.driveRobotCentric(strafeSpeed, 0, 0);
+
+        while (!backLeftDrive.atTargetPosition() &&
+                !backRightDrive.atTargetPosition() &&
+                !frontLeftDrive.atTargetPosition() &&
+                !frontRightDrive.atTargetPosition()) {
+        }
+
+        driveRobot.driveRobotCentric(0, 0, 0);
     }
 
     /**
@@ -403,7 +434,7 @@ public class RHSBucketAuto extends LinearOpMode {
         telemetry.addData("Path Segment", pathSegment);
         if (straight) {
             telemetry.addData("Motion", "Drive Straight");
-            telemetry.addData("Target Pos L:R", "%7d:%7d", leftTarget, rightTarget);
+            telemetry.addData("Target Pos L:R", "%7d:%7d", backLeftTarget, backRightTarget);
             telemetry.addData("Actual Pos L:R", "%7d:%7d", backLeftDrive.getCurrentPosition(),
                     backRightDrive.getCurrentPosition());
         } else {
