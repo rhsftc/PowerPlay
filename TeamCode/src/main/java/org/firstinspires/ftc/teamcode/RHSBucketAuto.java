@@ -394,11 +394,13 @@ public class RHSBucketAuto extends LinearOpMode {
                 simpleFeedForward.calculate(rightSpeed, 10));
     }
 
-    /* Strafe left or right.
+    /**
+     * Strafe left or right.
+     *
      * @param strafeSpeed - Drive speed.
-     * @param distance - Distance in inches. Negative moves left, positive moves right.
-     * @param strafeTime - Timeout seconds.
-     * */
+     * @param distance    - Distance in inches. Negative moves left, positive moves right.
+     * @param strafeTime  - Timeout seconds.
+     */
     public void strafeRobot(double strafeSpeed, double distance, int strafeTime) {
         ElapsedTime strafeTimer = new ElapsedTime();
         strafeTimer.reset();
@@ -426,6 +428,7 @@ public class RHSBucketAuto extends LinearOpMode {
                 !frontLeftDrive.atTargetPosition() &&
                 !frontRightDrive.atTargetPosition() &&
                 strafeTimer.seconds() < strafeTime) {
+            sendTelemetry(true);
         }
 
         driveRobot.driveRobotCentric(0, 0, 0);
