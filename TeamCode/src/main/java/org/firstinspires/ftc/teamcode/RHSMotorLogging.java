@@ -178,8 +178,8 @@ public class RHSMotorLogging extends LinearOpMode {
         }
 
         driveSpeed = leftSpeed;
-//        leftBackDrive.set(driveSpeed);
-        leftBackDrive.set(motorFeedforward.calculate(driveSpeed, 0));
+        leftBackDrive.set(driveSpeed);
+//        leftBackDrive.set(motorFeedforward.calculate(driveSpeed, 0));
 
         leftBackVelocity = leftBackDrive.getVelocity();
         leftBackPosition = leftBackDrive.getCurrentPosition();
