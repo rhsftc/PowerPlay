@@ -32,13 +32,14 @@ public class RHSBucketTele extends LinearOpMode {
     static final double GRIPPER_CLOSED = 0;
     static final double GRIPPER_RANGE = 360;
 
-    private MotorEx ArmMotor;
+    private MotorEx armMotor = null;
     private ElevatorFeedforward armFeedForward;
     private GamepadEx gamePadArm;
     private GamepadEx gamePadDrive;
     private SimpleServo GripperServo;
     private BooleanSupplier openClaw;
     private BooleanSupplier closeClaw;
+    private Datalog dataLog;
     private int armTarget = 0;
     // These are set in init.
     private double countsPerMotorRev = 0;
@@ -48,24 +49,28 @@ public class RHSBucketTele extends LinearOpMode {
 
     public void runOpMode() {
         //TODO This arm name is temporary for testing.
-        ArmMotor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
+        armMotor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
         armFeedForward = new ElevatorFeedforward(10, 20, 30);
         MotorEx frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive", Motor.GoBILDA.RPM_435);
-        MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
+        MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive", Motor.GoBILDA.RPM_435);
         MotorEx frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive", Motor.GoBILDA.RPM_435);
         MotorEx backRightDrive = new MotorEx(hardwareMap, "rightbackdrive", Motor.GoBILDA.RPM_435);
         frontLeftDrive.setInverted(true);
         backLeftDrive.setInverted(true);
 
-        ArmMotor.setInverted(false);
-        ArmMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        ArmMotor.setPositionCoefficient(.05);
-        ArmMotor.setPositionTolerance(10);
-        ArmMotor.setRunMode(Motor.RunMode.PositionControl);
-        ArmMotor.setTargetPosition(0);
-        while (!ArmMotor.atTargetPosition()) {
-            ArmMotor.set(1);
+        dataLog = new Datalog("datalogarm");
+
+        armMotor.setInverted(false);
+        armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        armMotor.setRunMode(Motor.RunMode.PositionControl);
+        armMotor.setPositionCoefficient(.05);
+        armMotor.setPositionTolerance(10);
+        armMotor.setTargetPosition(0);
+        while (!armMotor.atTargetPosition() && !isStopRequested()) {
+            armMotor.set(MAX_POWER);
         }
+
+        armMotor.stopMotor();
 
         GripperServo = new SimpleServo(hardwareMap, "servo1", 0, GRIPPER_RANGE, AngleUnit.DEGREES);
         openClaw = () -> gamePadArm.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)
@@ -88,6 +93,11 @@ public class RHSBucketTele extends LinearOpMode {
         motorRPM = backLeftDrive.getMaxRPM();
         countsPerInch = ((countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415));
 
+        telemetry.addData("Achievable Ticks", countsPerMotorRev);
+        telemetry.addData("RPM", motorRPM);
+        telemetry.addData("Counts/inch", countsPerInch);
+        telemetry.update();
+
         waitForStart();
         while (opModeIsActive() && !isStopRequested()) {
             gamePadDrive.readButtons();
@@ -100,12 +110,16 @@ public class RHSBucketTele extends LinearOpMode {
             ProcessArm();
             ProcessGripper();
 
-            telemetry.addData("Counts/inch", countsPerInch);
-            telemetry.addData("Target Position", "%d", armTarget);
-            telemetry.addData("Current Position", ArmMotor.getCurrentPosition());
-            telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
-            telemetry.update();
+            SendTelemetry();
         }
+    }
+
+    public void SendTelemetry() {
+        telemetry.addData("Target Position", "%d", armTarget);
+        telemetry.addData("Current Position", armMotor.getCurrentPosition());
+        telemetry.addData("Acceleration", armMotor.getAcceleration());
+        telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
+        telemetry.update();
     }
 
     public void ProcessGripper() {
@@ -151,7 +165,7 @@ public class RHSBucketTele extends LinearOpMode {
     }
 
     public void moveArm(ArmPosition position) {
-        int currentPosition = ArmMotor.getCurrentPosition();
+        int armPosition = armMotor.getCurrentPosition();
         switch (position) {
             case ground:
                 armTarget = HOME_POSITION * (int) countsPerInch;
@@ -166,10 +180,10 @@ public class RHSBucketTele extends LinearOpMode {
                 armTarget = (HIGH_JUNCTION * (int) countsPerInch);
                 break;
             case adjustUp:
-                armTarget = currentPosition + (ADJUST_ARM_INCREMENT * (int) countsPerInch);
+                armTarget = armPosition + (ADJUST_ARM_INCREMENT * (int) countsPerInch);
                 break;
             case adjustDown:
-                armTarget = currentPosition - (ADJUST_ARM_INCREMENT * (int) countsPerInch);
+                armTarget = armPosition - (ADJUST_ARM_INCREMENT * (int) countsPerInch);
                 break;
             default:
                 armTarget = 0;
@@ -177,14 +191,26 @@ public class RHSBucketTele extends LinearOpMode {
 
         // Prevent arm moving below HOME_POSITION
         armTarget = Math.max(armTarget, HOME_POSITION);
-        ArmMotor.setRunMode(Motor.RunMode.PositionControl);
-        ArmMotor.setTargetPosition(armTarget);
+        armMotor.setRunMode(Motor.RunMode.PositionControl);
+        armMotor.setTargetPosition(armTarget);
 
-        while (!ArmMotor.atTargetPosition()) {
-            ArmMotor.set(armFeedForward.calculate(MAX_POWER));
+        while (!armMotor.atTargetPosition() && !isStopRequested()) {
+//            armMotor.set(MAX_POWER);
+            armMotor.set(armFeedForward.calculate(MAX_POWER));
+            LogData();
+            SendTelemetry();
         }
 
-        ArmMotor.stopMotor();
+        armMotor.stopMotor();
+    }
+
+    public void LogData() {
+        dataLog.target.set(armTarget);
+        dataLog.velocity.set(armMotor.getVelocity());
+        dataLog.position.set(armMotor.getCurrentPosition());
+        dataLog.distance.set(armMotor.getDistance());
+        dataLog.acceleration.set(armMotor.getAcceleration());
+        dataLog.writeLine();
     }
 
     public enum ArmPosition {
@@ -194,5 +220,47 @@ public class RHSBucketTele extends LinearOpMode {
         high,
         adjustUp,
         adjustDown
+    }
+
+    public static class Datalog {
+        // The underlying datalogger object - it cares only about an array of loggable fields
+        private final Datalogger datalogger;
+
+        // These are all of the fields that we want in the datalog.
+        // Note that order here is NOT important. The order is important in the setFields() call below
+        public Datalogger.GenericField velocity = new Datalogger.GenericField("Velocity");
+        public Datalogger.GenericField target = new Datalogger.GenericField("Target");
+        public Datalogger.GenericField position = new Datalogger.GenericField("Position");
+        public Datalogger.GenericField distance = new Datalogger.GenericField("Distance");
+        public Datalogger.GenericField acceleration = new Datalogger.GenericField("Acceleration");
+
+        public Datalog(String name) {
+            // Build the underlying datalog object
+            datalogger = new Datalogger.Builder()
+
+                    // Pass through the filename
+                    .setFilename(name)
+
+                    // Request an automatic timestamp field
+                    .setAutoTimestamp(Datalogger.AutoTimestamp.DECIMAL_SECONDS)
+
+                    // Tell it about the fields we care to log.
+                    // Note that order *IS* important here! The order in which we list
+                    // the fields is the order in which they will appear in the log.
+                    .setFields(
+                            target,
+                            position,
+                            velocity,
+                            distance,
+                            acceleration
+                    )
+                    .build();
+        }
+
+        // Tell the datalogger to gather the values of the fields
+        // and write a new line in the log.
+        public void writeLine() {
+            datalogger.writeLine();
+        }
     }
 }
