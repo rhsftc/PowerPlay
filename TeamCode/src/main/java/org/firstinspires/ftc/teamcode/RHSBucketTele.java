@@ -41,6 +41,10 @@ public class RHSBucketTele extends LinearOpMode {
     private BooleanSupplier closeClaw;
     private Datalog dataLog;
     private int armTarget = 0;
+    private int armPosition = 0;
+    private double armVelocity = 0;
+    private double armDistance = 0;
+    private double armAcceleration = 0;
     // These are set in init.
     private double countsPerMotorRev = 0;
     private double motorRPM = 0;
@@ -109,15 +113,14 @@ public class RHSBucketTele extends LinearOpMode {
 
             ProcessArm();
             ProcessGripper();
-
             SendTelemetry();
         }
     }
 
     public void SendTelemetry() {
         telemetry.addData("Target Position", "%d", armTarget);
-        telemetry.addData("Current Position", armMotor.getCurrentPosition());
-        telemetry.addData("Acceleration", armMotor.getAcceleration());
+        telemetry.addData("Current Position", armPosition);
+        telemetry.addData("Acceleration", armAcceleration);
         telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
         telemetry.update();
     }
@@ -165,7 +168,7 @@ public class RHSBucketTele extends LinearOpMode {
     }
 
     public void moveArm(ArmPosition position) {
-        int armPosition = armMotor.getCurrentPosition();
+        armPosition = armMotor.getCurrentPosition();
         switch (position) {
             case ground:
                 armTarget = HOME_POSITION * (int) countsPerInch;
@@ -195,8 +198,13 @@ public class RHSBucketTele extends LinearOpMode {
         armMotor.setTargetPosition(armTarget);
 
         while (!armMotor.atTargetPosition() && !isStopRequested()) {
-//            armMotor.set(MAX_POWER);
-            armMotor.set(armFeedForward.calculate(MAX_POWER));
+            armMotor.set(MAX_POWER);
+//            armMotor.set(armFeedForward.calculate(MAX_POWER));
+            armPosition = armMotor.getCurrentPosition();
+            armDistance = armMotor.getDistance();
+            armVelocity = armMotor.getVelocity();
+            armMotor.encoder.getRawVelocity();
+            armAcceleration = armMotor.getAcceleration();
             LogData();
             SendTelemetry();
         }
@@ -206,10 +214,10 @@ public class RHSBucketTele extends LinearOpMode {
 
     public void LogData() {
         dataLog.target.set(armTarget);
-        dataLog.velocity.set(armMotor.getVelocity());
-        dataLog.position.set(armMotor.getCurrentPosition());
-        dataLog.distance.set(armMotor.getDistance());
-        dataLog.acceleration.set(armMotor.getAcceleration());
+        dataLog.velocity.set(armVelocity);
+        dataLog.position.set(armPosition);
+        dataLog.distance.set(armDistance);
+        dataLog.acceleration.set(armAcceleration);
         dataLog.writeLine();
     }
 

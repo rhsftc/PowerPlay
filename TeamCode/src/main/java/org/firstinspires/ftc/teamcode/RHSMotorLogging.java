@@ -107,7 +107,6 @@ public class RHSMotorLogging extends LinearOpMode {
 
         waitForStart();
         runtime.reset();
-        leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         driveStraight(DRIVE_SPEED, 24, 10);
         // Stay here to allow time to read display.
         while (opModeIsActive() && !isStopRequested()) {
@@ -150,9 +149,8 @@ public class RHSMotorLogging extends LinearOpMode {
 
         leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         leftBackDrive.setPositionCoefficient(0.05);
-        leftBackDrive.setTargetPosition(leftBackTarget);
-        leftBackDrive.set(0);
         leftBackDrive.setPositionTolerance(15);
+        leftBackDrive.setTargetPosition(leftBackTarget);
         // keep looping while we are still active, and motors are running.
         while (!leftBackDrive.atTargetPosition() &&
                 driveTimer.time() < driveTime) {
