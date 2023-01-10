@@ -69,12 +69,13 @@ public class RHSBucketTele extends LinearOpMode {
         armMotor.setRunMode(Motor.RunMode.PositionControl);
         armMotor.setPositionCoefficient(.05);
         armMotor.setPositionTolerance(10);
-        armMotor.setTargetPosition(0);
-        while (!armMotor.atTargetPosition() && !isStopRequested()) {
-            armMotor.set(MAX_POWER);
-        }
 
-        armMotor.stopMotor();
+        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
+        motorRPM = backLeftDrive.getMaxRPM();
+        countsPerInch = ((countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415));
+
+        // Move arm to start position
+        moveArm(ArmPosition.ground);
 
         GripperServo = new SimpleServo(hardwareMap, "servo1", 0, GRIPPER_RANGE, AngleUnit.DEGREES);
         openClaw = () -> gamePadArm.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)
@@ -93,9 +94,6 @@ public class RHSBucketTele extends LinearOpMode {
         gamePadArm = new GamepadEx(gamepad2);
 //        MecanumDrive drive = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
-        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
-        motorRPM = backLeftDrive.getMaxRPM();
-        countsPerInch = ((countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415));
 
         telemetry.addData("Achievable Ticks", countsPerMotorRev);
         telemetry.addData("RPM", motorRPM);
