@@ -30,10 +30,11 @@ package org.firstinspires.ftc.teamcode;
  */
 
 
+import com.arcrobotics.ftclib.hardware.motors.Motor;
+import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.List;
@@ -89,9 +90,10 @@ public class RHSBulkRead extends LinearOpMode {
     double t1 = 0;
     double t2 = 0;
     double t3 = 0;
-    private DcMotorEx m1, m2, m3, m4; // Motor Objects
+    private MotorEx m1, m2, m3, m4; // Motor Objects
     private long e1, e2, e3, e4; // Encoder Values
     private double v1, v2, v3, v4; // Velocities
+    private double a1, a2, a3, a4; // Accelerations
 
     @Override
     public void runOpMode() {
@@ -99,10 +101,10 @@ public class RHSBulkRead extends LinearOpMode {
         int cycles;
 
         // Important Step 1:  Make sure you use DcMotorEx when you instantiate your motors.
-        m1 = hardwareMap.get(DcMotorEx.class, "leftbackdrive");  // Configure the robot to use these 4 motor names,
-        m2 = hardwareMap.get(DcMotorEx.class, "rightbackdrive");  // or change these strings to match your existing Robot Configuration.
-        m3 = hardwareMap.get(DcMotorEx.class, "leftfrontdrive");
-        m4 = hardwareMap.get(DcMotorEx.class, "rightfrontdrive");
+        m1 = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);  // Configure the robot to use these 4 motor names,
+        m2 = new MotorEx(hardwareMap, "rightbackdrive", Motor.GoBILDA.RPM_435);  // or change these strings to match your existing Robot Configuration.
+        m3 = new MotorEx(hardwareMap, "leftfrontdrive", Motor.GoBILDA.RPM_435);
+        m4 = new MotorEx(hardwareMap, "rightfrontdrive", Motor.GoBILDA.RPM_435);
 
         // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
@@ -136,6 +138,10 @@ public class RHSBulkRead extends LinearOpMode {
             v3 = m3.getVelocity();
             v4 = m4.getVelocity();
 
+            a1 = m1.getAcceleration();
+            a2 = m2.getAcceleration();
+            a3 = m3.getAcceleration();
+            a4 = m4.getAcceleration();
             // Put Control loop action code here.
 
         }
@@ -166,8 +172,11 @@ public class RHSBulkRead extends LinearOpMode {
             v3 = m3.getVelocity();
             v4 = m4.getVelocity();
 
+            a1 = m1.getAcceleration();
+            a2 = m2.getAcceleration();
+            a3 = m3.getAcceleration();
+            a4 = m4.getAcceleration();
             // Put Control loop action code here.
-
         }
         // calculate the average cycle time.
         t2 = timer.milliseconds() / cycles;
@@ -203,6 +212,10 @@ public class RHSBulkRead extends LinearOpMode {
             v3 = m3.getVelocity();
             v4 = m4.getVelocity();
 
+            a1 = m1.getAcceleration();
+            a2 = m2.getAcceleration();
+            a3 = m3.getAcceleration();
+            a4 = m4.getAcceleration();
             // Put Control loop action code here.
 
         }
