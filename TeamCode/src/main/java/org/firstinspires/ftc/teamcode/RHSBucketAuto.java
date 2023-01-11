@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
@@ -48,6 +50,7 @@ public class RHSBucketAuto extends LinearOpMode {
     static final double HEADING_THRESHOLD = 1.0;
 
     int pathSegment;
+    Alliance alliance = Alliance.NONE;
     private double GRIPPER_MIN_ANGLE = 0;
     private double GRIPPER_MAX_ANGLE = 360;
     private double GRIPPER_OPEN = 255;
@@ -56,6 +59,8 @@ public class RHSBucketAuto extends LinearOpMode {
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
     private IMU imu;
+    private GamepadEx gamePadArm;
+    private GamepadEx gamePadDrive;
     private String WEB_CAM_NAME = "webcam1";
     private SleeveDetection.ParkingPosition parkLocation;
     private MotorEx backLeftDrive;
@@ -122,6 +127,9 @@ public class RHSBucketAuto extends LinearOpMode {
             }
         });
 
+        gamePadDrive = new GamepadEx(gamepad1);
+        gamePadArm = new GamepadEx(gamepad2);
+
         simpleFeedForward = new SimpleMotorFeedforward(5, 20);
         backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
         backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
@@ -157,11 +165,34 @@ public class RHSBucketAuto extends LinearOpMode {
         gripperServo.setRange(GRIPPER_CLOSED, GRIPPER_OPEN);
         openGripper();
 
+        // Choose your alliance.
+        telemetry.addLine("Alliance: X=Blue, B=Red");
+        telemetry.update();
+        while (!isStarted() && alliance == Alliance.NONE) {
+            gamePadDrive.readButtons();
+            if (gamePadDrive.wasJustPressed(GamepadKeys.Button.X)) {
+                alliance = Alliance.BLUE;
+            }
+
+            if (gamePadDrive.wasJustPressed(GamepadKeys.Button.B)) {
+                alliance = Alliance.RED;
+            }
+        }
+
+        telemetry.speak(alliance.toString());
+        telemetry.update();
+
         // Check the camera during init.
         while (!isStarted()) {
+            gamePadDrive.readButtons();
             parkLocation = getParkLocation();
+            telemetry.addLine("Press Back to stop.");
+            telemetry.addData("Alliance: ", alliance);
             telemetry.addData("Park Location: ", parkLocation);
             telemetry.update();
+            if (gamePadDrive.wasJustPressed(GamepadKeys.Button.BACK)) {
+                requestOpModeStop();
+            }
         }
 
         pathSegment = 1;
@@ -496,5 +527,11 @@ public class RHSBucketAuto extends LinearOpMode {
 
     public void closeGripper() {
         gripperServo.setPosition(0);
+    }
+
+    public enum Alliance {
+        RED,
+        BLUE,
+        NONE
     }
 }
