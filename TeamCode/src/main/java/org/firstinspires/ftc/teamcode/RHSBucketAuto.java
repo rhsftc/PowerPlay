@@ -122,7 +122,7 @@ public class RHSBucketAuto extends LinearOpMode {
             }
         });
 
-        simpleFeedForward = new SimpleMotorFeedforward(10, 20);
+        simpleFeedForward = new SimpleMotorFeedforward(5, 20);
         backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
         backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
         frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
@@ -136,6 +136,16 @@ public class RHSBucketAuto extends LinearOpMode {
         frontLeftDrive.setInverted(true);
         backRightDrive.setInverted(true);
         frontRightDrive.setInverted(true);
+
+        backLeftDrive.setPositionCoefficient(.05);
+        frontLeftDrive.setPositionCoefficient(.05);
+        backRightDrive.setPositionCoefficient(.05);
+        frontRightDrive.setPositionCoefficient(.05);
+
+        backLeftDrive.setPositionTolerance(10);
+        frontLeftDrive.setPositionTolerance(10);
+        backRightDrive.setPositionTolerance(10);
+        frontRightDrive.setPositionTolerance(10);
 
         driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
@@ -387,14 +397,12 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-//        driveRobot.driveWithMotorPowers(leftSpeed,
-//                rightSpeed,
-//                leftSpeed,
-//                rightSpeed);
-        driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
-                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10),
-                simpleFeedForward.calculate(simpleFeedForward.calculate(leftSpeed), 10),
-                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10));
+        driveRobot.driveRobotCentric(0, simpleFeedForward.calculate(leftSpeed, 10), 0);
+//        driveRobot.driveRobotCentric(0, leftSpeed, 0);
+//        driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
+//                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10),
+//                simpleFeedForward.calculate(simpleFeedForward.calculate(leftSpeed), 10),
+//                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10));
 
         sendTelemetry();
     }
@@ -435,7 +443,8 @@ public class RHSBucketAuto extends LinearOpMode {
                 !frontLeftDrive.atTargetPosition() &&
                 !frontRightDrive.atTargetPosition() &&
                 strafeTimer.seconds() < strafeTime) {
-            driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
+            driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
+//            driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
             sendTelemetry();
         }
 
