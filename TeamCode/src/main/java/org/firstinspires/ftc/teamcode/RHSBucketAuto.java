@@ -104,6 +104,7 @@ public class RHSBucketAuto extends LinearOpMode {
         // Now initialize the IMU with this mounting orientation
         // Note: if you choose two conflicting directions, this initialization will cause a code exception.
         imu.initialize(new IMU.Parameters(orientationOnRobot));
+        imu.resetYaw();
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, WEB_CAM_NAME), cameraMonitorViewId);
@@ -133,6 +134,8 @@ public class RHSBucketAuto extends LinearOpMode {
 
         backLeftDrive.setInverted(true);
         frontLeftDrive.setInverted(true);
+        backRightDrive.setInverted(true);
+        frontRightDrive.setInverted(true);
 
         driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
@@ -163,20 +166,16 @@ public class RHSBucketAuto extends LinearOpMode {
                     break;
                 case 2:
                     if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
-                        strafeRobot(DRIVE_SPEED, -12, STRAFE_TIMEOUT);
-//                        turnToHeading(TURN_SPEED, 90, 2);
-//                        holdHeading(TURN_SPEED, 90, 1);
-//                        driveStraight(DRIVE_SPEED, 12, 90, 3);
+                        strafeRobot(DRIVE_SPEED, 12, 270, STRAFE_TIMEOUT);
                     } else if (parkLocation == SleeveDetection.ParkingPosition.CENTER) {
                     } else if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
-                        strafeRobot(DRIVE_SPEED, 12, STRAFE_TIMEOUT);
-//                        turnToHeading(TURN_SPEED, -90, 2);
-//                        holdHeading(TURN_SPEED, 90, 1);
-//                        driveStraight(DRIVE_SPEED, 12, -90, 3);
+                        strafeRobot(DRIVE_SPEED, 12, 90, STRAFE_TIMEOUT);
                     }
                     pathSegment = 3;
                     break;
                 case 3:
+                    while (!isStopRequested()) {
+                    }
                     telemetry.addData("Status", "Path complete.");
                     telemetry.update();
                     break;
@@ -228,13 +227,19 @@ public class RHSBucketAuto extends LinearOpMode {
             int moveCounts = (int) (distance * countsPerInch);
             backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
             backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
+            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
+            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
 
             // Set Target FIRST, then turn on RUN_TO_POSITION
             backLeftDrive.setTargetPosition(backLeftTarget);
             backRightDrive.setTargetPosition(backRightTarget);
+            frontLeftDrive.setTargetPosition(frontLeftTarget);
+            frontRightDrive.setTargetPosition(frontRightTarget);
 
-            backLeftDrive.setRunMode(MotorEx.RunMode.PositionControl);
-            backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
+            backLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+            backRightDrive.setRunMode(Motor.RunMode.PositionControl);
+            frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+            frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
 
             // Set the required driving speed  (must be positive for RUN_TO_POSITION)
             // Start driving straight, and then enter the control loop
@@ -243,8 +248,11 @@ public class RHSBucketAuto extends LinearOpMode {
 
             // keep looping while we are still active, and BOTH motors are running.
             while (opModeIsActive() &&
-                    (!backLeftDrive.atTargetPosition() && !backRightDrive.atTargetPosition()) &&
-                    driveTimer.time() < driveTime) {
+                    !backLeftDrive.atTargetPosition() &&
+                    !backRightDrive.atTargetPosition() &&
+                    !frontLeftDrive.atTargetPosition() &&
+                    !frontRightDrive.atTargetPosition() &&
+                    (driveTimer.time() < driveTime)) {
 
                 // Determine required steering to keep on heading
                 turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
@@ -255,13 +263,10 @@ public class RHSBucketAuto extends LinearOpMode {
 
                 // Apply the turning correction to the current driving speed.
                 moveRobot(maxDriveSpeed, turnSpeed);
-
-                // Display drive status for the driver.
-                sendTelemetry(true);
             }
 
-            // Stop all motion & Turn off RUN_TO_POSITION
-            moveRobot(0, 0);
+            // Stop all motion
+            StopAllMotors();
         }
     }
 
@@ -297,9 +302,6 @@ public class RHSBucketAuto extends LinearOpMode {
 
             // Pivot in place by applying the turning correction
             moveRobot(0, turnSpeed);
-
-            // Display drive status for the driver.
-            sendTelemetry(false);
         }
 
         // Stop all motion;
@@ -332,9 +334,6 @@ public class RHSBucketAuto extends LinearOpMode {
 
             // Pivot in place by applying the turning correction
             moveRobot(0, turnSpeed);
-
-            // Display drive status for the driver.
-            sendTelemetry(false);
         }
 
         // Stop all motion;
@@ -388,10 +387,16 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
+//        driveRobot.driveWithMotorPowers(leftSpeed,
+//                rightSpeed,
+//                leftSpeed,
+//                rightSpeed);
         driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
-                simpleFeedForward.calculate(rightSpeed, 10),
-                simpleFeedForward.calculate(leftSpeed, 10),
-                simpleFeedForward.calculate(rightSpeed, 10));
+                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10),
+                simpleFeedForward.calculate(simpleFeedForward.calculate(leftSpeed), 10),
+                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10));
+
+        sendTelemetry();
     }
 
     /**
@@ -399,17 +404,19 @@ public class RHSBucketAuto extends LinearOpMode {
      *
      * @param strafeSpeed - Drive speed.
      * @param distance    - Distance in inches. Negative moves left, positive moves right.
+     * @param heading     - Strafe direction. Field-centric.
      * @param strafeTime  - Timeout seconds.
      */
-    public void strafeRobot(double strafeSpeed, double distance, int strafeTime) {
+    public void strafeRobot(double strafeSpeed, double distance, double heading, int strafeTime) {
         ElapsedTime strafeTimer = new ElapsedTime();
         strafeTimer.reset();
 
+        targetHeading = heading;
         int moveCounts = (int) (distance * countsPerInch);
-        backLeftTarget = backLeftDrive.getCurrentPosition() - moveCounts;
+        backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
         backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
         frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-        frontRightTarget = frontRightDrive.getCurrentPosition() - moveCounts;
+        frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
 
         // Set Target FIRST, then turn on RUN_TO_POSITION
         backLeftDrive.setTargetPosition(backLeftTarget);
@@ -421,39 +428,40 @@ public class RHSBucketAuto extends LinearOpMode {
         backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
         frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
         frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
-        driveRobot.driveRobotCentric(strafeSpeed, 0, 0);
+        driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
 
         while (!backLeftDrive.atTargetPosition() &&
                 !backRightDrive.atTargetPosition() &&
                 !frontLeftDrive.atTargetPosition() &&
                 !frontRightDrive.atTargetPosition() &&
                 strafeTimer.seconds() < strafeTime) {
-            sendTelemetry(true);
+            driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
+            sendTelemetry();
         }
 
-        driveRobot.driveRobotCentric(0, 0, 0);
+        StopAllMotors();
+//        driveRobot.driveFieldCentric(0, 0, 0, heading);
     }
 
     /**
      * Display the various control parameters while driving
-     *
-     * @param straight Set to true if we are driving straight, and the encoder positions should be included in the telemetry.
      */
-    private void sendTelemetry(boolean straight) {
+    private void sendTelemetry() {
         telemetry.addData("Path Segment", pathSegment);
-        if (straight) {
-            telemetry.addData("Motion", "Drive Straight");
-            telemetry.addData("Target Pos L:R", "%7d:%7d", backLeftTarget, backRightTarget);
-            telemetry.addData("Actual Pos L:R", "%7d:%7d", backLeftDrive.getCurrentPosition(),
-                    backRightDrive.getCurrentPosition());
-        } else {
-            telemetry.addData("Motion", "Turning");
-        }
-
+        telemetry.addData("Target Pos L:R", "%7d:%7d", backLeftTarget, backRightTarget);
+        telemetry.addData("Actual Pos L:R", "%7d:%7d", backLeftDrive.getCurrentPosition(),
+                backRightDrive.getCurrentPosition());
         telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
         telemetry.addData("Error:Steer", "%5.1f:%5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
         telemetry.update();
+    }
+
+    public void StopAllMotors() {
+        backLeftDrive.stopMotor();
+        backRightDrive.stopMotor();
+        frontLeftDrive.stopMotor();
+        frontRightDrive.stopMotor();
     }
 
     /**
