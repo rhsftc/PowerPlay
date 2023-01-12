@@ -215,6 +215,10 @@ public class RHSBucketAuto extends LinearOpMode {
                     pathSegment = 3;
                     break;
                 case 3:
+                    turnToHeading(TURN_SPEED, 45, 2);
+                    pathSegment = 4;
+                    break;
+                case 4:
                     while (!isStopRequested()) {
                     }
                     telemetry.addData("Status", "Path complete.");
@@ -428,7 +432,7 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-        driveRobot.driveRobotCentric(0, simpleFeedForward.calculate(leftSpeed, 10), 0);
+        driveRobot.driveRobotCentric(0, simpleFeedForward.calculate(leftSpeed, 10), turn);
 //        driveRobot.driveRobotCentric(0, leftSpeed, 0);
 //        driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
 //                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10),
