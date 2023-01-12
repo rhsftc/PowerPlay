@@ -166,39 +166,36 @@ public class RHSBucketAuto extends LinearOpMode {
         openGripper();
 
         // Choose your alliance.
-        telemetry.addLine("Alliance: X=Blue, B=Red");
-        telemetry.update();
-        while (!isStarted() && alliance == Alliance.NONE) {
+        while (!isStarted() && !gamePadDrive.wasJustPressed(GamepadKeys.Button.START)) {
             gamePadDrive.readButtons();
             if (gamePadDrive.wasJustPressed(GamepadKeys.Button.X)) {
                 alliance = Alliance.BLUE;
+                telemetry.speak(alliance.toString());
+                telemetry.update();
             }
 
             if (gamePadDrive.wasJustPressed(GamepadKeys.Button.B)) {
                 alliance = Alliance.RED;
+                telemetry.speak(alliance.toString());
+                telemetry.update();
             }
+
+            telemetry.addLine("Select Alliance Color");
+            telemetry.addLine("X=Blue, B=Red, Start=adjust camera");
+            telemetry.addData("Alliance: ", alliance);
+            telemetry.update();
         }
 
-        telemetry.speak(alliance.toString());
-        telemetry.update();
-
-        // Check the camera during init.
+        // Adjust the camera here.
         while (!isStarted()) {
-            gamePadDrive.readButtons();
             parkLocation = getParkLocation();
-            telemetry.addLine("Press Back to stop.");
             telemetry.addData("Alliance: ", alliance);
             telemetry.addData("Park Location: ", parkLocation);
             telemetry.update();
-            if (gamePadDrive.wasJustPressed(GamepadKeys.Button.BACK)) {
-                requestOpModeStop();
-            }
         }
 
-        pathSegment = 1;
-
         waitForStart();
-
+        pathSegment = 1;
         while (opModeIsActive() && !isStopRequested()) {
             switch (pathSegment) {
                 case 1:
