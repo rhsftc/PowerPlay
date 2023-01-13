@@ -101,8 +101,8 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         imu = hardwareMap.get(IMU.class, "imu");
-        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.UP;
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
 
         // Now initialize the IMU with this mounting orientation
@@ -199,7 +199,7 @@ public class RHSBucketAuto extends LinearOpMode {
             switch (pathSegment) {
                 case 1:
                     driveStraight(DRIVE_SPEED, 18, 0, 3);
-                    pathSegment = 2;
+                    pathSegment = 4;
                     break;
                 case 2:
                     if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
