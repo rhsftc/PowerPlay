@@ -36,7 +36,7 @@ public class RHSBucketAuto extends LinearOpMode {
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
+    static final double WHEEL_DIAMETER_INCHES = 3.778;     // For figuring circumference
     static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
     static final double TURN_SPEED = 0.4;
     // Define the Proportional control coefficient (or GAIN) for "heading control".
@@ -49,13 +49,13 @@ public class RHSBucketAuto extends LinearOpMode {
     // Requiring more accuracy (a smaller number) will often make the turn take longer to get into the final position.
     static final double HEADING_THRESHOLD = 1.0;
 
-    int pathSegment;
-    Alliance alliance = Alliance.NONE;
+    private int pathSegment;
+    private StartPosition startPosition = StartPosition.NONE;
     private double GRIPPER_MIN_ANGLE = 0;
     private double GRIPPER_MAX_ANGLE = 360;
     private double GRIPPER_OPEN = 255;
     private double GRIPPER_CLOSED = 0;
-    private int STRAFE_TIMEOUT = 3;     //Time to wait for strafing to finish.
+    private int STRAFE_TIMEOUT = 2;     //Time to wait for strafing to finish.
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
     private IMU imu;
@@ -71,8 +71,8 @@ public class RHSBucketAuto extends LinearOpMode {
     private SimpleMotorFeedforward simpleFeedForward;
     private SimpleServo gripperServo;
     // These are set in init.
-    private double countsPerMotorRev = 0;
-    private double motorRPM = 0;
+    private double countsPerMotorRev = 480;
+    private double motorRPM = 300;
     private double countsPerInch = 0;
 
     private int backLeftTarget = 0;
@@ -87,7 +87,6 @@ public class RHSBucketAuto extends LinearOpMode {
     private double targetHeading = 0;
     private double robotHeading = 0;
     private double headingOffset = 0;
-
 
     /**
      * This function is executed when this Op Mode is selected from the Driver Station.
@@ -165,31 +164,31 @@ public class RHSBucketAuto extends LinearOpMode {
         gripperServo.setRange(GRIPPER_CLOSED, GRIPPER_OPEN);
         openGripper();
 
-        // Choose your alliance.
+        // Choose your start position.
         while (!isStarted() && !gamePadDrive.wasJustPressed(GamepadKeys.Button.START)) {
             gamePadDrive.readButtons();
             if (gamePadDrive.wasJustPressed(GamepadKeys.Button.X)) {
-                alliance = Alliance.BLUE;
-                telemetry.speak(alliance.toString());
+                startPosition = StartPosition.LEFT;
+                telemetry.speak(startPosition.toString());
                 telemetry.update();
             }
 
             if (gamePadDrive.wasJustPressed(GamepadKeys.Button.B)) {
-                alliance = Alliance.RED;
-                telemetry.speak(alliance.toString());
+                startPosition = StartPosition.RIGHT;
+                telemetry.speak(startPosition.toString());
                 telemetry.update();
             }
 
             telemetry.addLine("Select Alliance Color");
             telemetry.addLine("X=Blue, B=Red, Start=adjust camera");
-            telemetry.addData("Alliance: ", alliance);
+            telemetry.addData("Alliance: ", startPosition);
             telemetry.update();
         }
 
         // Adjust the camera here.
         while (!isStarted()) {
             parkLocation = getParkLocation();
-            telemetry.addData("Alliance: ", alliance);
+            telemetry.addData("Start: ", startPosition);
             telemetry.addData("Park Location: ", parkLocation);
             telemetry.update();
         }
@@ -431,10 +430,6 @@ public class RHSBucketAuto extends LinearOpMode {
 
         driveRobot.driveRobotCentric(0, simpleFeedForward.calculate(leftSpeed, 10), turn);
 //        driveRobot.driveRobotCentric(0, leftSpeed, 0);
-//        driveRobot.driveWithMotorPowers(simpleFeedForward.calculate(leftSpeed, 10),
-//                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10),
-//                simpleFeedForward.calculate(simpleFeedForward.calculate(leftSpeed), 10),
-//                simpleFeedForward.calculate(simpleFeedForward.calculate(rightSpeed), 10));
 
         sendTelemetry();
     }
@@ -468,17 +463,18 @@ public class RHSBucketAuto extends LinearOpMode {
         backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
         frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
         frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
-        driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
+//        driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
+        driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
+        sendTelemetry();
 
-        while (!backLeftDrive.atTargetPosition() &&
-                !backRightDrive.atTargetPosition() &&
-                !frontLeftDrive.atTargetPosition() &&
-                !frontRightDrive.atTargetPosition() &&
-                strafeTimer.seconds() < strafeTime) {
-            driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
-//            driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
-            sendTelemetry();
-        }
+//        while (!backLeftDrive.atTargetPosition() &&
+//                !backRightDrive.atTargetPosition() &&
+//                !frontLeftDrive.atTargetPosition() &&
+//                !frontRightDrive.atTargetPosition() &&
+//                strafeTimer.seconds() < strafeTime) {
+//            driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
+////            driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
+//        }
 
         StopAllMotors();
 //        driveRobot.driveFieldCentric(0, 0, 0, heading);
@@ -530,9 +526,9 @@ public class RHSBucketAuto extends LinearOpMode {
         gripperServo.setPosition(0);
     }
 
-    public enum Alliance {
-        RED,
-        BLUE,
+    public enum StartPosition {
+        RIGHT,
+        LEFT,
         NONE
     }
 }
