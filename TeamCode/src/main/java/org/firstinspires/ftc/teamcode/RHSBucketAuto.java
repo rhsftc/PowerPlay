@@ -215,8 +215,10 @@ public class RHSBucketAuto extends LinearOpMode {
                     pathSegment = 4;
                     break;
                 case 4:
+                    // Wait here so drive can read telemetry. Remove this after testing.
                     while (!isStopRequested()) {
                     }
+
                     telemetry.addData("Status", "Path complete.");
                     telemetry.update();
                     break;

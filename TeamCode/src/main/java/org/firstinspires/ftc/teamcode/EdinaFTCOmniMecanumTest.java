@@ -35,7 +35,6 @@ import com.arcrobotics.ftclib.gamepad.ToggleButtonReader;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /**
@@ -75,6 +74,7 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     boolean testMode = false;
     boolean motorForward = true;
+    double power;
     GamepadEx gamePadEx;
 
     @Override
@@ -95,10 +95,10 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
         // When you first test your robot, push the left joystick forward
         // and flip the direction ( FORWARD <-> REVERSE ) of any wheel that runs
         // backwards
-        leftFrontDrive.setDirection(DcMotorEx.Direction.FORWARD);
+        leftFrontDrive.setDirection(DcMotorEx.Direction.REVERSE);
         leftBackDrive.setDirection(DcMotorEx.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotorEx.Direction.REVERSE);
-        rightBackDrive.setDirection(DcMotorEx.Direction.REVERSE);
+        rightFrontDrive.setDirection(DcMotorEx.Direction.FORWARD);
+        rightBackDrive.setDirection(DcMotorEx.Direction.FORWARD);
 
         leftFrontDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         leftBackDrive.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -127,7 +127,7 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
             startToggle.readValue();
-            directionToggle.getState();
+            directionToggle.readValue();
             double max;
             // Start toggles test mode to use x, a, y and b to test each motor.
             testMode = startToggle.getState();
@@ -169,7 +169,7 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
             // 2) Then make sure they run in the correct direction by modifying the
             // the setDirection() calls above.
             if (testMode) {
-                double power = (motorForward) ? 1.0 : -1.0;
+                power = motorForward ? 1.0 : -1.0;
                 leftFrontPower = gamepad1.x ? power : 0.0; // X gamepad
                 leftBackPower = gamepad1.a ? power : 0.0; // A gamepad
                 rightFrontPower = gamepad1.y ? power : 0.0; // Y gamepad
@@ -185,6 +185,7 @@ public class EdinaFTCOmniMecanumTest extends LinearOpMode {
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime);
             telemetry.addData("Test Mode", testMode);
+            telemetry.addData("Forward", motorForward);
             telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
             telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
             telemetry.addData("Front Ticks Left/right", "%d, %d", leftFrontDrive.getCurrentPosition(), rightFrontDrive.getCurrentPosition());
