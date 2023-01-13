@@ -21,10 +21,10 @@ public class RHSMecanumSample extends LinearOpMode {
         // constructor takes in frontLeft, frontRight, backLeft, backRight motors
         // IN THAT ORDER
         MecanumDrive drive = new MecanumDrive(
-                new Motor(hardwareMap, "FrontLeft"),
-                new Motor(hardwareMap, "FrontRight"),
-                new Motor(hardwareMap, "BackLeft"),
-                new Motor(hardwareMap, "BackRight")
+                new Motor(hardwareMap, "Frontleft"),
+                new Motor(hardwareMap, "Frontright"),
+                new Motor(hardwareMap, "Backleft"),
+                new Motor(hardwareMap, "Backright")
         );
 
         // This is the built-in IMU in the REV hub.
