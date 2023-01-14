@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
+import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
@@ -46,8 +47,8 @@ public class RHSBucketTele extends LinearOpMode {
     private double armDistance = 0;
     private double armAcceleration = 0;
     // These are set in init.
-    private double countsPerMotorRev = 0;
-    private double motorRPM = 0;
+    private double countsPerMotorRev = 480;
+    private double motorRPM = 300;
     private double countsPerInch = 0;
 
 
@@ -92,7 +93,7 @@ public class RHSBucketTele extends LinearOpMode {
 
         gamePadDrive = new GamepadEx(gamepad1);
         gamePadArm = new GamepadEx(gamepad2);
-//        MecanumDrive drive = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
+        MecanumDrive drive = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
 
         telemetry.addData("Achievable Ticks", countsPerMotorRev);
@@ -104,13 +105,13 @@ public class RHSBucketTele extends LinearOpMode {
         while (opModeIsActive() && !isStopRequested()) {
             gamePadDrive.readButtons();
             gamePadArm.readButtons();
-//TODO
-//            drive.driveRobotCentric(gamePadDrive.getLeftX(),
-//                    gamePadDrive.getLeftY(),
-//                    gamePadDrive.getRightX());
+
+            drive.driveRobotCentric(gamePadDrive.getLeftX(),
+                    gamePadDrive.getLeftY(),
+                    gamePadDrive.getRightX());
 
             ProcessArm();
-            ProcessGripper();
+//            ProcessGripper();
             SendTelemetry();
         }
     }
@@ -119,7 +120,7 @@ public class RHSBucketTele extends LinearOpMode {
         telemetry.addData("Target Position", "%d", armTarget);
         telemetry.addData("Current Position", armPosition);
         telemetry.addData("Acceleration", armAcceleration);
-        telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
+//        telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
         telemetry.update();
     }
 

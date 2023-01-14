@@ -53,9 +53,9 @@ public class RHSBucketAuto extends LinearOpMode {
     private StartPosition startPosition = StartPosition.NONE;
     private double GRIPPER_MIN_ANGLE = 0;
     private double GRIPPER_MAX_ANGLE = 360;
-    private double GRIPPER_OPEN = 255;
+    private double GRIPPER_OPEN = 90;
     private double GRIPPER_CLOSED = 0;
-    private int STRAFE_TIMEOUT = 2;     //Time to wait for strafing to finish.
+    private int STRAFE_TIMEOUT = 3;     //Time to wait for strafing to finish.
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
     private IMU imu;
@@ -154,10 +154,10 @@ public class RHSBucketAuto extends LinearOpMode {
         backRightDrive.setPositionTolerance(10);
         frontRightDrive.setPositionTolerance(10);
 
-        driveRobot = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
+        driveRobot = new MecanumDrive(false,frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
-        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
-        motorRPM = backLeftDrive.getMaxRPM();
+//        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
+//        motorRPM = backLeftDrive.getMaxRPM();
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
         gripperServo = new SimpleServo(hardwareMap, "servo1", GRIPPER_MIN_ANGLE, GRIPPER_MAX_ANGLE);
@@ -198,12 +198,12 @@ public class RHSBucketAuto extends LinearOpMode {
         while (opModeIsActive() && !isStopRequested()) {
             switch (pathSegment) {
                 case 1:
-                    driveStraight(DRIVE_SPEED, 18, 0, 3);
-                    pathSegment = 2;
+                    driveStraight(DRIVE_SPEED, 12, 0, 3);
+                    pathSegment = 4;
                     break;
                 case 2:
                     if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
-                        strafeRobot(DRIVE_SPEED, 12, 270, STRAFE_TIMEOUT);
+                        strafeRobot(DRIVE_SPEED, 12, -270, STRAFE_TIMEOUT);
                     } else if (parkLocation == SleeveDetection.ParkingPosition.CENTER) {
                     } else if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
                         strafeRobot(DRIVE_SPEED, 12, 90, STRAFE_TIMEOUT);
@@ -216,6 +216,7 @@ public class RHSBucketAuto extends LinearOpMode {
                     pathSegment = 4;
                     break;
                 case 4:
+                    stopAllMotors();
                     // Wait here so drive can read telemetry. Remove this after testing.
                     while (!isStopRequested()) {
                     }
@@ -251,7 +252,7 @@ public class RHSBucketAuto extends LinearOpMode {
      * 2) Driver stops the opmode running.
      *
      * @param maxDriveSpeed MAX Speed for forward/rev motion (range 0 to +1.0) .
-     * @param distance      Distance (in inches) to move from current position.  Negative distance means move backward.
+     * @param distance      Distance (in inches) to move from current position.
      * @param heading       Absolute Heading Angle (in Degrees) relative to last gyro reset.
      *                      0 = fwd. +ve is CCW from fwd. -ve is CW from forward.
      *                      If a relative angle is required, add/subtract from the current robotHeading.
@@ -265,53 +266,51 @@ public class RHSBucketAuto extends LinearOpMode {
         ElapsedTime driveTimer = new ElapsedTime();
         driveTimer.reset();
 
-        // Ensure that the op mode is still active
-        if (opModeIsActive()) {
-            // Determine new target position, and pass to motor controller
-            int moveCounts = (int) (distance * countsPerInch);
-            backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-            backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
-            frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-            frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
+        // Determine new target position, and pass to motor controller
+        int moveCounts = (int) (distance * countsPerInch);
+        backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
+        backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
+        frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
+        frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
 
-            // Set Target FIRST, then turn on RUN_TO_POSITION
-            backLeftDrive.setTargetPosition(backLeftTarget);
-            backRightDrive.setTargetPosition(backRightTarget);
-            frontLeftDrive.setTargetPosition(frontLeftTarget);
-            frontRightDrive.setTargetPosition(frontRightTarget);
+        // Set Target FIRST, then turn on RUN_TO_POSITION
+        backLeftDrive.setTargetPosition(backLeftTarget);
+        backRightDrive.setTargetPosition(backRightTarget);
+        frontLeftDrive.setTargetPosition(frontLeftTarget);
+        frontRightDrive.setTargetPosition(frontRightTarget);
 
-            backLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-            backRightDrive.setRunMode(Motor.RunMode.PositionControl);
-            frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-            frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
+        backLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+        backRightDrive.setRunMode(Motor.RunMode.PositionControl);
+        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
 
-            // Set the required driving speed  (must be positive for RUN_TO_POSITION)
-            // Start driving straight, and then enter the control loop
-            maxDriveSpeed = Math.abs(maxDriveSpeed);
+        // Set the required driving speed  (must be positive for RUN_TO_POSITION)
+        // Start driving straight, and then enter the control loop
+        maxDriveSpeed = Math.abs(maxDriveSpeed);
+        moveRobot(maxDriveSpeed, 0);
+
+        // keep looping while we are still active, and all motors are running.
+        while (opModeIsActive() &&
+                !isStopRequested() &&
+                !(backLeftDrive.atTargetPosition() &&
+                        backRightDrive.atTargetPosition() &&
+                        frontLeftDrive.atTargetPosition() &&
+                        frontRightDrive.atTargetPosition()) &&
+                (driveTimer.time() < driveTime)) {
+
+            // Determine required steering to keep on heading
+            turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
+
+            // if driving in reverse, the motor correction also needs to be reversed
+            if (distance < 0)
+                turnSpeed *= -1.0;
+
+            // Apply the turning correction to the current driving speed.
             moveRobot(maxDriveSpeed, 0);
-
-            // keep looping while we are still active, and all motors are running.
-            while (opModeIsActive() &&
-                    !backLeftDrive.atTargetPosition() &&
-                    !backRightDrive.atTargetPosition() &&
-                    !frontLeftDrive.atTargetPosition() &&
-                    !frontRightDrive.atTargetPosition() &&
-                    (driveTimer.time() < driveTime)) {
-
-                // Determine required steering to keep on heading
-                turnSpeed = getSteeringCorrection(heading, P_DRIVE_GAIN);
-
-                // if driving in reverse, the motor correction also needs to be reversed
-                if (distance < 0)
-                    turnSpeed *= -1.0;
-
-                // Apply the turning correction to the current driving speed.
-                moveRobot(maxDriveSpeed, turnSpeed);
-            }
-
-            // Stop all motion
-            StopAllMotors();
         }
+
+        // Stop all motion
+        stopAllMotors();
     }
 
     /**
@@ -421,8 +420,10 @@ public class RHSBucketAuto extends LinearOpMode {
         driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
         turnSpeed = turn;      // save this value as a class member so it can be used by telemetry.
 
-        leftSpeed = drive - turn;
-        rightSpeed = drive + turn;
+        leftSpeed = drive;
+        rightSpeed = drive;
+//        leftSpeed = drive - turn;
+//        rightSpeed = drive + turn;
 
         // Scale speeds down if either one exceeds +/- 1.0;
         double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
@@ -431,8 +432,8 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-        driveRobot.driveRobotCentric(0, simpleFeedForward.calculate(leftSpeed, 10), turn);
-//        driveRobot.driveRobotCentric(0, leftSpeed, 0);
+//        driveRobot.driveRobotCentric(0, simpleFeedForward.calculate(leftSpeed, 10), turn);
+        driveRobot.driveRobotCentric(0, leftSpeed, turn);
 
         sendTelemetry();
     }
@@ -456,6 +457,14 @@ public class RHSBucketAuto extends LinearOpMode {
         frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
         frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
 
+        if (heading < 0) {
+            frontLeftTarget *= -1;
+            backRightTarget *= -1;
+        } else {
+            frontRightTarget *= -1;
+            backLeftTarget *= -1;
+        }
+
         // Set Target FIRST, then turn on RUN_TO_POSITION
         backLeftDrive.setTargetPosition(backLeftTarget);
         backRightDrive.setTargetPosition(backRightTarget);
@@ -471,16 +480,19 @@ public class RHSBucketAuto extends LinearOpMode {
 //        while (strafeTimer.seconds() < strafeTime) {
 //            sendTelemetry();
 //        }
-        while (!backLeftDrive.atTargetPosition() &&
-                !backRightDrive.atTargetPosition() &&
-                !frontLeftDrive.atTargetPosition() &&
-                !frontRightDrive.atTargetPosition() &&
-                strafeTimer.seconds() < strafeTime) {
+        while (opModeIsActive() &&
+                !isStopRequested() &&
+                !(backLeftDrive.atTargetPosition() &&
+                        backRightDrive.atTargetPosition() &&
+                        frontLeftDrive.atTargetPosition() &&
+                        frontRightDrive.atTargetPosition()) &&
+                (strafeTimer.seconds() < strafeTime)) {
 //            driveRobot.driveRobotCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0);
             driveRobot.driveRobotCentric(strafeSpeed, 0, 0);
+            sendTelemetry();
         }
 
-        StopAllMotors();
+        stopAllMotors();
 //        driveRobot.driveFieldCentric(0, 0, 0, heading);
     }
 
@@ -489,8 +501,17 @@ public class RHSBucketAuto extends LinearOpMode {
      */
     private void sendTelemetry() {
         telemetry.addData("Path Segment", pathSegment);
-        telemetry.addData("Target Pos L:R", "%7d:%7d", backLeftTarget, backRightTarget);
-        telemetry.addData("Actual Pos L:R", "%7d:%7d", backLeftDrive.getCurrentPosition(),
+        telemetry.addData("Target Pos FL:BR",
+                "%7d:%7d\n%7d:%7d",
+                frontLeftTarget,
+                frontRightTarget,
+                backLeftTarget,
+                backRightTarget);
+        telemetry.addData("Actual Pos FL:BR",
+                "%7d:%7d\n%7d:%7d",
+                frontLeftDrive.getCurrentPosition(),
+                frontRightDrive.getCurrentPosition(),
+                backLeftDrive.getCurrentPosition(),
                 backRightDrive.getCurrentPosition());
         telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
         telemetry.addData("Error:Steer", "%5.1f:%5.1f", headingError, turnSpeed);
@@ -498,11 +519,11 @@ public class RHSBucketAuto extends LinearOpMode {
         telemetry.update();
     }
 
-    public void StopAllMotors() {
-        backLeftDrive.stopMotor();
-        backRightDrive.stopMotor();
-        frontLeftDrive.stopMotor();
-        frontRightDrive.stopMotor();
+    public void stopAllMotors() {
+        backLeftDrive.set(0);
+        backRightDrive.set(0);
+        frontLeftDrive.set(0);
+        frontRightDrive.set(0);
     }
 
     /**
