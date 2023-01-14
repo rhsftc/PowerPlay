@@ -21,7 +21,7 @@ import java.util.function.BooleanSupplier;
 //@Disabled
 public class RHSBucketTele extends LinearOpMode {
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 4;
+    static final double WHEEL_DIAMETER_INCHES = 3.778;
     static final int LOW_JUNCTION = 14;
     static final int MEDIUM_JUNCTION = 24;
     static final int HIGH_JUNCTION = 34;
@@ -54,14 +54,18 @@ public class RHSBucketTele extends LinearOpMode {
 
     public void runOpMode() {
         //TODO This arm name is temporary for testing.
-        armMotor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
+        armMotor = new MotorEx(hardwareMap, "armmotor", Motor.GoBILDA.RPM_435);
         armFeedForward = new ElevatorFeedforward(10, 20, 30);
-        MotorEx frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive", Motor.GoBILDA.RPM_435);
-        MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive", Motor.GoBILDA.RPM_435);
-        MotorEx frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive", Motor.GoBILDA.RPM_435);
-        MotorEx backRightDrive = new MotorEx(hardwareMap, "rightbackdrive", Motor.GoBILDA.RPM_435);
+
+        MotorEx frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
+        MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
+        MotorEx frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive");
+        MotorEx backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
+
         frontLeftDrive.setInverted(true);
         backLeftDrive.setInverted(true);
+        frontRightDrive.setInverted(true);
+        backRightDrive.setInverted(true);
 
         dataLog = new Datalog("datalogarm");
 
@@ -71,8 +75,8 @@ public class RHSBucketTele extends LinearOpMode {
         armMotor.setPositionCoefficient(.05);
         armMotor.setPositionTolerance(10);
 
-        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
-        motorRPM = backLeftDrive.getMaxRPM();
+//        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
+//        motorRPM = backLeftDrive.getMaxRPM();
         countsPerInch = ((countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415));
 
         // Move arm to start position
