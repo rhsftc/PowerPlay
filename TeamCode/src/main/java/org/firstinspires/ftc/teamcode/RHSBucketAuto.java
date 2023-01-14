@@ -43,7 +43,7 @@ public class RHSBucketAuto extends LinearOpMode {
     // We define one value when Turning (larger errors), and the other is used when Driving straight (smaller errors).
     // Increase these numbers if the heading does not corrects strongly enough (eg: a heavy robot or using tracks)
     // Decrease these numbers if the heading does not settle on the correct value (eg: very agile robot with omni wheels)
-    static final double P_TURN_GAIN = 0.02;     // Larger is more responsive, but also less stable
+    static final double P_TURN_GAIN = 0.01;     // Larger is more responsive, but also less stable
     static final double P_DRIVE_GAIN = 0.03;     // Larger is more responsive, but also less stable
     // How close must the heading get to the target before moving to next step.
     // Requiring more accuracy (a smaller number) will often make the turn take longer to get into the final position.
@@ -179,16 +179,16 @@ public class RHSBucketAuto extends LinearOpMode {
                 telemetry.update();
             }
 
-            telemetry.addLine("Select Alliance Color");
-            telemetry.addLine("X=Blue, B=Red, Start=adjust camera");
-            telemetry.addData("Alliance: ", startPosition);
+            telemetry.addLine("Select start position");
+            telemetry.addLine("X=Left, B=Right, Start=adjust camera");
+            telemetry.addData("Position: ", startPosition);
             telemetry.update();
         }
 
         // Adjust the camera here.
         while (!isStarted()) {
             parkLocation = getParkLocation();
-            telemetry.addData("Start: ", startPosition);
+            telemetry.addData("Start Position: ", startPosition);
             telemetry.addData("Park Location: ", parkLocation);
             telemetry.update();
         }
@@ -199,7 +199,7 @@ public class RHSBucketAuto extends LinearOpMode {
             switch (pathSegment) {
                 case 1:
                     driveStraight(DRIVE_SPEED, 18, 0, 3);
-                    pathSegment = 4;
+                    pathSegment = 2;
                     break;
                 case 2:
                     if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
@@ -208,7 +208,8 @@ public class RHSBucketAuto extends LinearOpMode {
                     } else if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
                         strafeRobot(DRIVE_SPEED, 12, 90, STRAFE_TIMEOUT);
                     }
-                    pathSegment = 3;
+
+                    pathSegment = 4;
                     break;
                 case 3:
                     turnToHeading(TURN_SPEED, 45, 2);
@@ -289,7 +290,7 @@ public class RHSBucketAuto extends LinearOpMode {
             maxDriveSpeed = Math.abs(maxDriveSpeed);
             moveRobot(maxDriveSpeed, 0);
 
-            // keep looping while we are still active, and BOTH motors are running.
+            // keep looping while we are still active, and all motors are running.
             while (opModeIsActive() &&
                     !backLeftDrive.atTargetPosition() &&
                     !backRightDrive.atTargetPosition() &&
@@ -466,17 +467,18 @@ public class RHSBucketAuto extends LinearOpMode {
         frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
         frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
 //        driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
-        driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
-        sendTelemetry();
-
-//        while (!backLeftDrive.atTargetPosition() &&
-//                !backRightDrive.atTargetPosition() &&
-//                !frontLeftDrive.atTargetPosition() &&
-//                !frontRightDrive.atTargetPosition() &&
-//                strafeTimer.seconds() < strafeTime) {
-//            driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
-////            driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
+//        driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
+//        while (strafeTimer.seconds() < strafeTime) {
+//            sendTelemetry();
 //        }
+        while (!backLeftDrive.atTargetPosition() &&
+                !backRightDrive.atTargetPosition() &&
+                !frontLeftDrive.atTargetPosition() &&
+                !frontRightDrive.atTargetPosition() &&
+                strafeTimer.seconds() < strafeTime) {
+//            driveRobot.driveRobotCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0);
+            driveRobot.driveRobotCentric(strafeSpeed, 0, 0);
+        }
 
         StopAllMotors();
 //        driveRobot.driveFieldCentric(0, 0, 0, heading);
