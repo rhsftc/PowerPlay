@@ -29,9 +29,12 @@ public class RHSBucketTele extends LinearOpMode {
     static final int CONE_HEIGHT = 5;
     static final int ADJUST_ARM_INCREMENT = 1;
     static final double MAX_POWER = 0.4;
-    static final double GRIPPER_OPEN = 255;
-    static final double GRIPPER_CLOSED = 0;
-    static final double GRIPPER_RANGE = 360;
+    // These set the range for the gripper servo.
+    static final double GRIPPER_MIN_ANGLE = 5;
+    static final double GRIPPER_MAX_ANGLE = 45;
+    // These set the open and close positions
+    static final double GRIPPER_OPEN = 45;
+    static final double GRIPPER_CLOSED = 5;
 
     private MotorEx armMotor = null;
     private ElevatorFeedforward armFeedForward;
@@ -82,7 +85,9 @@ public class RHSBucketTele extends LinearOpMode {
         // Move arm to start position
         moveArm(ArmPosition.ground);
 
-        GripperServo = new SimpleServo(hardwareMap, "servo1", 0, GRIPPER_RANGE, AngleUnit.DEGREES);
+        GripperServo = new SimpleServo(hardwareMap, "servo1", GRIPPER_MIN_ANGLE, GRIPPER_MAX_ANGLE, AngleUnit.DEGREES);
+        GripperServo.setInverted(true);
+
         openClaw = () -> gamePadArm.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)
                 && !gamePadArm.isDown(GamepadKeys.Button.RIGHT_BUMPER);
         closeClaw = () -> !gamePadArm.isDown(GamepadKeys.Button.LEFT_BUMPER)
