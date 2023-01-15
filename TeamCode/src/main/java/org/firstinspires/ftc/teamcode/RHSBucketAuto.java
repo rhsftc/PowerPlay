@@ -8,6 +8,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -67,6 +68,8 @@ public class RHSBucketAuto extends LinearOpMode {
     private MotorEx backRightDrive;
     private MotorEx frontLeftDrive;
     private MotorEx frontRightDrive;
+    private MotorGroup leftMotors;
+    private MotorGroup rightMotors;
     private MecanumDrive driveRobot;
     private SimpleMotorFeedforward simpleFeedForward;
     private SimpleServo gripperServo;
@@ -79,6 +82,11 @@ public class RHSBucketAuto extends LinearOpMode {
     private int backRightTarget = 0;
     private int frontLeftTarget = 0;
     private int frontRightTarget = 0;
+    private int backLeftPosition = 0;
+    private int backRightPosition = 0;
+    private int frontLeftPosition = 0;
+    private int frontRightPosition = 0;
+
     private double turnSpeed = 0;
     private double driveSpeed = 0;
     private double leftSpeed = 0;
@@ -141,20 +149,23 @@ public class RHSBucketAuto extends LinearOpMode {
 
         backLeftDrive.setInverted(true);
         frontLeftDrive.setInverted(true);
-        backRightDrive.setInverted(true);
-        frontRightDrive.setInverted(true);
+        backRightDrive.setInverted(false);
+        frontRightDrive.setInverted(false);
 
-        backLeftDrive.setPositionCoefficient(.05);
-        frontLeftDrive.setPositionCoefficient(.05);
-        backRightDrive.setPositionCoefficient(.05);
-        frontRightDrive.setPositionCoefficient(.05);
+        backLeftDrive.setPositionCoefficient(.03);
+        frontLeftDrive.setPositionCoefficient(.03);
+        backRightDrive.setPositionCoefficient(.03);
+        frontRightDrive.setPositionCoefficient(.03);
 
         backLeftDrive.setPositionTolerance(10);
         frontLeftDrive.setPositionTolerance(10);
         backRightDrive.setPositionTolerance(10);
         frontRightDrive.setPositionTolerance(10);
 
-        driveRobot = new MecanumDrive(false,frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
+        leftMotors = new MotorGroup(backLeftDrive, frontLeftDrive);
+        rightMotors = new MotorGroup(backRightDrive, frontRightDrive);
+
+//        driveRobot = new MecanumDrive(false, frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
 //        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
 //        motorRPM = backLeftDrive.getMaxRPM();
@@ -198,7 +209,7 @@ public class RHSBucketAuto extends LinearOpMode {
         while (opModeIsActive() && !isStopRequested()) {
             switch (pathSegment) {
                 case 1:
-                    driveStraight(DRIVE_SPEED, 12, 0, 3);
+                    driveStraight(DRIVE_SPEED, 18, 0, 3);
                     pathSegment = 4;
                     break;
                 case 2:
@@ -268,21 +279,24 @@ public class RHSBucketAuto extends LinearOpMode {
 
         // Determine new target position, and pass to motor controller
         int moveCounts = (int) (distance * countsPerInch);
-        backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-        backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
-        frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-        frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
+        getCurrentPositionsFromMotorGroups();
+        backLeftTarget = backLeftPosition + moveCounts;
+        backRightTarget = backRightPosition + moveCounts;
+        frontLeftTarget = backLeftTarget;
+        frontRightTarget = backRightTarget;
+//        frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
+//        frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
 
         // Set Target FIRST, then turn on RUN_TO_POSITION
-        backLeftDrive.setTargetPosition(backLeftTarget);
-        backRightDrive.setTargetPosition(backRightTarget);
-        frontLeftDrive.setTargetPosition(frontLeftTarget);
-        frontRightDrive.setTargetPosition(frontRightTarget);
+        leftMotors.setTargetPosition(backLeftTarget);
+        rightMotors.setTargetPosition(backRightTarget);
+//        frontLeftDrive.setTargetPosition(frontLeftTarget);
+//        frontRightDrive.setTargetPosition(frontRightTarget);
 
-        backLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-        backRightDrive.setRunMode(Motor.RunMode.PositionControl);
-        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
+        leftMotors.setRunMode(Motor.RunMode.PositionControl);
+        rightMotors.setRunMode(Motor.RunMode.PositionControl);
+//        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+//        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
 
         // Set the required driving speed  (must be positive for RUN_TO_POSITION)
         // Start driving straight, and then enter the control loop
@@ -292,10 +306,8 @@ public class RHSBucketAuto extends LinearOpMode {
         // keep looping while we are still active, and all motors are running.
         while (opModeIsActive() &&
                 !isStopRequested() &&
-                !(backLeftDrive.atTargetPosition() &&
-                        backRightDrive.atTargetPosition() &&
-                        frontLeftDrive.atTargetPosition() &&
-                        frontRightDrive.atTargetPosition()) &&
+                !(leftMotors.atTargetPosition() &&
+                        rightMotors.atTargetPosition()) &&
                 (driveTimer.time() < driveTime)) {
 
             // Determine required steering to keep on heading
@@ -306,7 +318,7 @@ public class RHSBucketAuto extends LinearOpMode {
                 turnSpeed *= -1.0;
 
             // Apply the turning correction to the current driving speed.
-            moveRobot(maxDriveSpeed, 0);
+            moveRobot(maxDriveSpeed, turnSpeed);
         }
 
         // Stop all motion
@@ -420,10 +432,10 @@ public class RHSBucketAuto extends LinearOpMode {
         driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
         turnSpeed = turn;      // save this value as a class member so it can be used by telemetry.
 
-        leftSpeed = drive;
-        rightSpeed = drive;
-//        leftSpeed = drive - turn;
-//        rightSpeed = drive + turn;
+//        leftSpeed = drive;
+//        rightSpeed = drive;
+        leftSpeed = drive - turn;
+        rightSpeed = drive + turn;
 
         // Scale speeds down if either one exceeds +/- 1.0;
         double max = Math.max(Math.abs(leftSpeed), Math.abs(rightSpeed));
@@ -432,9 +444,12 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-//        driveRobot.driveRobotCentric(0, simpleFeedForward.calculate(leftSpeed, 10), turn);
-        driveRobot.driveRobotCentric(0, leftSpeed, turn);
+        leftMotors.set(leftSpeed);
+        rightMotors.set(rightSpeed);
+//        leftMotors.set(simpleFeedForward.calculate(leftSpeed, 10));
+//        rightMotors.set(simpleFeedForward.calculate(rightSpeed, 10));
 
+        getCurrentPositionsFromMotorGroups();
         sendTelemetry();
     }
 
@@ -452,10 +467,11 @@ public class RHSBucketAuto extends LinearOpMode {
 
         targetHeading = heading;
         int moveCounts = (int) (distance * countsPerInch);
-        backLeftTarget = backLeftDrive.getCurrentPosition() + moveCounts;
-        backRightTarget = backRightDrive.getCurrentPosition() + moveCounts;
-        frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-        frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
+        getCurrentPositionsFromMotorGroups();
+        backLeftTarget = backLeftPosition + moveCounts;
+        backRightTarget = backRightPosition + moveCounts;
+        frontLeftTarget = frontLeftPosition + moveCounts;
+        frontRightTarget = frontRightPosition + moveCounts;
 
         if (heading < 0) {
             frontLeftTarget *= -1;
@@ -509,14 +525,23 @@ public class RHSBucketAuto extends LinearOpMode {
                 backRightTarget);
         telemetry.addData("Actual Pos FL:BR",
                 "%7d:%7d\n%7d:%7d",
-                frontLeftDrive.getCurrentPosition(),
-                frontRightDrive.getCurrentPosition(),
-                backLeftDrive.getCurrentPosition(),
-                backRightDrive.getCurrentPosition());
+                frontLeftPosition,
+                frontRightPosition,
+                backLeftPosition,
+                backRightPosition);
         telemetry.addData("Angle Target:Current", "%5.2f:%5.0f", targetHeading, robotHeading);
         telemetry.addData("Error:Steer", "%5.1f:%5.1f", headingError, turnSpeed);
         telemetry.addData("Wheel Speeds L:R.", "%5.2f : %5.2f", leftSpeed, rightSpeed);
         telemetry.update();
+    }
+
+    public void getCurrentPositionsFromMotorGroups() {
+        List<Double> leftPositions = leftMotors.getPositions();
+        List<Double> rightPositions = rightMotors.getPositions();
+        backLeftPosition = leftPositions.get(0).intValue();
+        frontLeftPosition = leftPositions.get(1).intValue();
+        backRightPosition = rightPositions.get(0).intValue();
+        frontRightPosition = rightPositions.get(1).intValue();
     }
 
     public void stopAllMotors() {
