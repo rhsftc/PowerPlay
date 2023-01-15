@@ -479,19 +479,27 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Set Target FIRST, then turn on RUN_TO_POSITION
-        leftMotors.setTargetPosition(backLeftTarget);
-        rightMotors.setTargetPosition(backRightTarget);
+        backLeftDrive.setTargetPosition(backLeftTarget);
+        backRightDrive.setTargetPosition(backRightTarget);
+        frontLeftDrive.setTargetPosition(frontLeftTarget);
+        frontRightDrive.setTargetDistance(frontRightTarget);
 
-        leftMotors.setRunMode(MotorEx.RunMode.PositionControl);
-        rightMotors.setRunMode(MotorEx.RunMode.PositionControl);
+        backLeftDrive.setRunMode(MotorEx.RunMode.PositionControl);
+        backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
+        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
+        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
 
         while (opModeIsActive() &&
                 !isStopRequested() &&
-                !(leftMotors.atTargetPosition() &&
-                        rightMotors.atTargetPosition()) &&
+                !(backLeftDrive.atTargetPosition() &&
+                        backRightDrive.atTargetPosition() &&
+                        frontLeftDrive.atTargetPosition() &&
+                        frontRightDrive.atTargetPosition()) &&
                 (strafeTimer.seconds() < strafeTime)) {
-            leftMotors.set(strafeSpeed);
-            rightMotors.set(strafeSpeed);
+            backLeftDrive.set(strafeSpeed);
+            backRightDrive.set(strafeSpeed);
+            frontLeftDrive.set(strafeSpeed);
+            frontRightDrive.set(strafeSpeed);
             getCurrentPositionsFromMotorGroups();
             sendTelemetry();
         }
@@ -556,7 +564,8 @@ public class RHSBucketAuto extends LinearOpMode {
     }
 
     public void openGripper() {
-        gripperServo.turnToAngle(5);
+
+        gripperServo.turnToAngle(15);
     }
 
     public void closeGripper() {
