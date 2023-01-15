@@ -52,10 +52,8 @@ public class RHSBucketAuto extends LinearOpMode {
 
     private int pathSegment;
     private StartPosition startPosition = StartPosition.NONE;
-    private double GRIPPER_MIN_ANGLE = 0;
-    private double GRIPPER_MAX_ANGLE = 360;
-    private double GRIPPER_OPEN = 90;
-    private double GRIPPER_CLOSED = 0;
+    private double GRIPPER_MIN_ANGLE = 5;
+    private double GRIPPER_MAX_ANGLE = 45;
     private int STRAFE_TIMEOUT = 3;     //Time to wait for strafing to finish.
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
@@ -163,14 +161,13 @@ public class RHSBucketAuto extends LinearOpMode {
         leftMotors = new MotorGroup(backLeftDrive, frontLeftDrive);
         rightMotors = new MotorGroup(backRightDrive, frontRightDrive);
 
-//        driveRobot = new MecanumDrive(false, frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
-
+//TODO:        Use this for GoBilda motors.
 //        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
 //        motorRPM = backLeftDrive.getMaxRPM();
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
         gripperServo = new SimpleServo(hardwareMap, "servo1", GRIPPER_MIN_ANGLE, GRIPPER_MAX_ANGLE);
-        gripperServo.setRange(GRIPPER_CLOSED, GRIPPER_OPEN);
+        gripperServo.setInverted(true);
         openGripper();
 
         // Choose your start position.
@@ -208,16 +205,23 @@ public class RHSBucketAuto extends LinearOpMode {
             switch (pathSegment) {
                 case 1:
                     driveStraight(DRIVE_SPEED, 18, 0, 3);
-                    pathSegment = 4;
+                    sleep(2000);
+                    pathSegment = 2;
                     break;
                 case 2:
-                    if (parkLocation == SleeveDetection.ParkingPosition.LEFT) {
-                        strafeRobot(DRIVE_SPEED, 12, -270, STRAFE_TIMEOUT);
-                    } else if (parkLocation == SleeveDetection.ParkingPosition.CENTER) {
-                    } else if (parkLocation == SleeveDetection.ParkingPosition.RIGHT) {
-                        strafeRobot(DRIVE_SPEED, 12, 90, STRAFE_TIMEOUT);
+                    // Where did the camera tell us to park?
+                    switch (parkLocation) {
+                        case LEFT:
+                            strafeRobot(DRIVE_SPEED, 12, 270, STRAFE_TIMEOUT);
+                            break;
+                        case CENTER:
+                            break;
+                        case RIGHT:
+                            strafeRobot(DRIVE_SPEED, 12, 90, STRAFE_TIMEOUT);
+                            break;
                     }
 
+                    sleep(2000);
                     pathSegment = 4;
                     break;
                 case 3:
@@ -226,8 +230,9 @@ public class RHSBucketAuto extends LinearOpMode {
                     break;
                 case 4:
                     stopAllMotors();
-                    // Wait here so drive can read telemetry. Remove this after testing.
+//                TODO: Wait here so drive can read telemetry. Remove this after testing.
                     while (!isStopRequested()) {
+                        sendTelemetry();
                     }
 
                     telemetry.addData("Status", "Path complete.");
@@ -280,21 +285,15 @@ public class RHSBucketAuto extends LinearOpMode {
         getCurrentPositionsFromMotorGroups();
         backLeftTarget = backLeftPosition + moveCounts;
         backRightTarget = backRightPosition + moveCounts;
-        frontLeftTarget = backLeftTarget;
-        frontRightTarget = backRightTarget;
-//        frontLeftTarget = frontLeftDrive.getCurrentPosition() + moveCounts;
-//        frontRightTarget = frontRightDrive.getCurrentPosition() + moveCounts;
+        frontLeftTarget = backLeftTarget + moveCounts;
+        frontRightTarget = backRightTarget + moveCounts;
 
         // Set Target FIRST, then turn on RUN_TO_POSITION
         leftMotors.setTargetPosition(backLeftTarget);
         rightMotors.setTargetPosition(backRightTarget);
-//        frontLeftDrive.setTargetPosition(frontLeftTarget);
-//        frontRightDrive.setTargetPosition(frontRightTarget);
 
         leftMotors.setRunMode(Motor.RunMode.PositionControl);
         rightMotors.setRunMode(Motor.RunMode.PositionControl);
-//        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-//        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
 
         // Set the required driving speed  (must be positive for RUN_TO_POSITION)
         // Start driving straight, and then enter the control loop
@@ -455,7 +454,7 @@ public class RHSBucketAuto extends LinearOpMode {
      * Strafe left or right.
      *
      * @param strafeSpeed - Drive speed.
-     * @param distance    - Distance in inches. Negative moves left, positive moves right.
+     * @param distance    - Distance in inches..
      * @param heading     - Strafe direction. Field-centric.
      * @param strafeTime  - Timeout seconds.
      */
@@ -471,7 +470,7 @@ public class RHSBucketAuto extends LinearOpMode {
         frontLeftTarget = frontLeftPosition + moveCounts;
         frontRightTarget = frontRightPosition + moveCounts;
 
-        if (heading < 0) {
+        if (heading > 180) {
             frontLeftTarget *= -1;
             backRightTarget *= -1;
         } else {
@@ -480,34 +479,24 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Set Target FIRST, then turn on RUN_TO_POSITION
-        backLeftDrive.setTargetPosition(backLeftTarget);
-        backRightDrive.setTargetPosition(backRightTarget);
-        frontLeftDrive.setTargetPosition(frontLeftTarget);
-        frontRightDrive.setTargetPosition(frontRightTarget);
+        leftMotors.setTargetPosition(backLeftTarget);
+        rightMotors.setTargetPosition(backRightTarget);
 
-        backLeftDrive.setRunMode(MotorEx.RunMode.PositionControl);
-        backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
-        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
-//        driveRobot.driveFieldCentric(strafeSpeed, 0, 0, heading);
-//        driveRobot.driveFieldCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0, heading);
-//        while (strafeTimer.seconds() < strafeTime) {
-//            sendTelemetry();
-//        }
+        leftMotors.setRunMode(MotorEx.RunMode.PositionControl);
+        rightMotors.setRunMode(MotorEx.RunMode.PositionControl);
+
         while (opModeIsActive() &&
                 !isStopRequested() &&
-                !(backLeftDrive.atTargetPosition() &&
-                        backRightDrive.atTargetPosition() &&
-                        frontLeftDrive.atTargetPosition() &&
-                        frontRightDrive.atTargetPosition()) &&
+                !(leftMotors.atTargetPosition() &&
+                        rightMotors.atTargetPosition()) &&
                 (strafeTimer.seconds() < strafeTime)) {
-//            driveRobot.driveRobotCentric(simpleFeedForward.calculate(strafeSpeed, 10), 0, 0);
-            driveRobot.driveRobotCentric(strafeSpeed, 0, 0);
+            leftMotors.set(strafeSpeed);
+            rightMotors.set(strafeSpeed);
+            getCurrentPositionsFromMotorGroups();
             sendTelemetry();
         }
 
         stopAllMotors();
-//        driveRobot.driveFieldCentric(0, 0, 0, heading);
     }
 
     /**
@@ -567,11 +556,11 @@ public class RHSBucketAuto extends LinearOpMode {
     }
 
     public void openGripper() {
-        gripperServo.setPosition(1);
+        gripperServo.turnToAngle(5);
     }
 
     public void closeGripper() {
-        gripperServo.setPosition(0);
+        gripperServo.turnToAngle(45);
     }
 
     public enum StartPosition {
