@@ -60,7 +60,6 @@ public class RHSBucketAuto extends LinearOpMode {
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
     private IMU imu;
-    private GamepadEx gamePadArm;
     private GamepadEx gamePadDrive;
     private String WEB_CAM_NAME = "webcam1";
     private SleeveDetection.ParkingPosition parkLocation;
@@ -73,7 +72,7 @@ public class RHSBucketAuto extends LinearOpMode {
     private MecanumDrive driveRobot;
     private SimpleMotorFeedforward simpleFeedForward;
     private SimpleServo gripperServo;
-    // These are set in init.
+
     private double countsPerMotorRev = 480;
     private double motorRPM = 300;
     private double countsPerInch = 0;
@@ -135,7 +134,6 @@ public class RHSBucketAuto extends LinearOpMode {
         });
 
         gamePadDrive = new GamepadEx(gamepad1);
-        gamePadArm = new GamepadEx(gamepad2);
 
         simpleFeedForward = new SimpleMotorFeedforward(5, 20);
         backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
@@ -152,10 +150,10 @@ public class RHSBucketAuto extends LinearOpMode {
         backRightDrive.setInverted(false);
         frontRightDrive.setInverted(false);
 
-        backLeftDrive.setPositionCoefficient(.03);
-        frontLeftDrive.setPositionCoefficient(.03);
-        backRightDrive.setPositionCoefficient(.03);
-        frontRightDrive.setPositionCoefficient(.03);
+        backLeftDrive.setPositionCoefficient(.05);
+        frontLeftDrive.setPositionCoefficient(.05);
+        backRightDrive.setPositionCoefficient(.05);
+        frontRightDrive.setPositionCoefficient(.05);
 
         backLeftDrive.setPositionTolerance(10);
         frontLeftDrive.setPositionTolerance(10);
