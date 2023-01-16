@@ -229,7 +229,7 @@ public class RHSBucketAuto extends LinearOpMode {
                     pathSegment = 4;
                     break;
                 case 4:
-                    stopAllMotors();
+                    stopAllMotors(true);
 //                TODO: Wait here so drive can read telemetry. Remove this after testing.
                     while (!isStopRequested()) {
                         sendTelemetry();
@@ -319,7 +319,7 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion
-        stopAllMotors();
+        stopAllMotors(true);
     }
 
     /**
@@ -464,7 +464,7 @@ public class RHSBucketAuto extends LinearOpMode {
 
         targetHeading = heading;
         int moveCounts = (int) (distance * countsPerInch);
-        getCurrentPositionsFromMotorGroups();
+        getCurrentPositionsFromMotors();
         backLeftTarget = backLeftPosition + moveCounts;
         backRightTarget = backRightPosition + moveCounts;
         frontLeftTarget = frontLeftPosition + moveCounts;
@@ -504,7 +504,7 @@ public class RHSBucketAuto extends LinearOpMode {
             sendTelemetry();
         }
 
-        stopAllMotors();
+        stopAllMotors(true);
     }
 
     /**
@@ -512,14 +512,14 @@ public class RHSBucketAuto extends LinearOpMode {
      */
     private void sendTelemetry() {
         telemetry.addData("Path Segment", pathSegment);
-        telemetry.addData("Target Pos FL:BR",
-                "%7d:%7d\n%7d:%7d",
+        telemetry.addData("Target FL:FR",
+                "%7d:%7d\n       BL:BR %7d:%7d",
                 frontLeftTarget,
                 frontRightTarget,
                 backLeftTarget,
                 backRightTarget);
-        telemetry.addData("Actual Pos FL:BR",
-                "%7d:%7d\n%7d:%7d",
+        telemetry.addData("Actual FL:FR",
+                "%7d:%7d\n       BL:BR %7d:%7d",
                 frontLeftPosition,
                 frontRightPosition,
                 backLeftPosition,
@@ -530,6 +530,7 @@ public class RHSBucketAuto extends LinearOpMode {
         telemetry.update();
     }
 
+    // This get positions from motor groups.
     public void getCurrentPositionsFromMotorGroups() {
         List<Double> leftPositions = leftMotors.getPositions();
         List<Double> rightPositions = rightMotors.getPositions();
@@ -539,11 +540,26 @@ public class RHSBucketAuto extends LinearOpMode {
         frontRightPosition = rightPositions.get(1).intValue();
     }
 
-    public void stopAllMotors() {
-        backLeftDrive.set(0);
-        backRightDrive.set(0);
-        frontLeftDrive.set(0);
-        frontRightDrive.set(0);
+    // Get postions from individual motors.
+    public void getCurrentPositionsFromMotors() {
+        backLeftPosition = backLeftDrive.getCurrentPosition();
+        backRightPosition = backRightDrive.getCurrentPosition();
+        frontLeftPosition = frontLeftDrive.getCurrentPosition();
+        frontRightPosition = frontRightDrive.getCurrentPosition();
+    }
+
+    public void stopAllMotors(boolean useSet) {
+        if (useSet) {
+            backLeftDrive.set(0);
+            backRightDrive.set(0);
+            frontLeftDrive.set(0);
+            frontRightDrive.set(0);
+        } else {
+            backLeftDrive.stopMotor();
+            backRightDrive.stopMotor();
+            frontLeftDrive.stopMotor();
+            frontRightDrive.stopMotor();
+        }
     }
 
     /**
