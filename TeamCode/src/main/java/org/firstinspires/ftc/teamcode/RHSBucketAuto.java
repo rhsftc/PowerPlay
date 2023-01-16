@@ -225,7 +225,7 @@ public class RHSBucketAuto extends LinearOpMode {
                     pathSegment = 4;
                     break;
                 case 3:
-                    turnToHeading(TURN_SPEED, 45, 2);
+                    turnToHeading(TURN_SPEED, 45, 3);
                     sleep(1000);
                     pathSegment = 4;
                     break;
@@ -344,6 +344,7 @@ public class RHSBucketAuto extends LinearOpMode {
 
         // keep looping while we are still active, and not on heading.
         while (opModeIsActive() &&
+                !isStopRequested() &&
                 (Math.abs(headingError) > HEADING_THRESHOLD) &&
                 turnTimer.time() < turnTime) {
 
@@ -358,7 +359,8 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion;
-        moveRobot(0, 0);
+        stopAllMotors(true);
+//        moveRobot(0, 0);
     }
 
     /**
@@ -378,7 +380,9 @@ public class RHSBucketAuto extends LinearOpMode {
         holdTimer.reset();
 
         // keep looping while we have time remaining.
-        while (opModeIsActive() && (holdTimer.time() < holdTime)) {
+        while (opModeIsActive() &&
+                !isStopRequested() &&
+                (holdTimer.time() < holdTime)) {
             // Determine required steering to keep on heading
             turnSpeed = getSteeringCorrection(heading, P_TURN_GAIN);
 
@@ -390,7 +394,8 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion;
-        moveRobot(0, 0);
+        stopAllMotors(true);
+//        moveRobot(0, 0);
     }
 
     // **********  LOW Level driving functions.  ********************
@@ -430,8 +435,6 @@ public class RHSBucketAuto extends LinearOpMode {
         driveSpeed = drive;     // save this value as a class member so it can be used by telemetry.
         turnSpeed = turn;      // save this value as a class member so it can be used by telemetry.
 
-//        leftSpeed = drive;
-//        rightSpeed = drive;
         leftSpeed = drive - turn;
         rightSpeed = drive + turn;
 
@@ -447,7 +450,6 @@ public class RHSBucketAuto extends LinearOpMode {
         leftMotors.set(simpleFeedForward.calculate(leftSpeed, 5));
         rightMotors.set(simpleFeedForward.calculate(rightSpeed, 5));
 
-        getCurrentPositionsFromMotorGroups();
         sendTelemetry();
     }
 
@@ -505,7 +507,6 @@ public class RHSBucketAuto extends LinearOpMode {
             backRightDrive.set(strafeSpeed);
             frontLeftDrive.set(strafeSpeed);
             frontRightDrive.set(strafeSpeed);
-            getCurrentPositionsFromMotorGroups();
             sendTelemetry();
         }
 
