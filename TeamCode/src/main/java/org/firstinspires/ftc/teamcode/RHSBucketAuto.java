@@ -133,7 +133,7 @@ public class RHSBucketAuto extends LinearOpMode {
 
         gamePadDrive = new GamepadEx(gamepad1);
 
-        simpleFeedForward = new SimpleMotorFeedforward(5, 20);
+        simpleFeedForward = new SimpleMotorFeedforward(2, 5);
         backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
         backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
         frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
@@ -221,11 +221,12 @@ public class RHSBucketAuto extends LinearOpMode {
                             break;
                     }
 
-                    sleep(2000);
+                    sleep(1000);
                     pathSegment = 4;
                     break;
                 case 3:
                     turnToHeading(TURN_SPEED, 45, 2);
+                    sleep(1000);
                     pathSegment = 4;
                     break;
                 case 4:
@@ -441,10 +442,10 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-        leftMotors.set(leftSpeed);
-        rightMotors.set(rightSpeed);
-//        leftMotors.set(simpleFeedForward.calculate(leftSpeed, 10));
-//        rightMotors.set(simpleFeedForward.calculate(rightSpeed, 10));
+//        leftMotors.set(leftSpeed);
+//        rightMotors.set(rightSpeed);
+        leftMotors.set(simpleFeedForward.calculate(leftSpeed, 5));
+        rightMotors.set(simpleFeedForward.calculate(rightSpeed, 5));
 
         getCurrentPositionsFromMotorGroups();
         sendTelemetry();
@@ -461,6 +462,10 @@ public class RHSBucketAuto extends LinearOpMode {
     public void strafeRobot(double strafeSpeed, double distance, double heading, int strafeTime) {
         ElapsedTime strafeTimer = new ElapsedTime();
         strafeTimer.reset();
+        backLeftDrive.resetEncoder();
+        backRightDrive.resetEncoder();
+        frontLeftDrive.resetEncoder();
+        frontRightDrive.resetEncoder();
 
         targetHeading = heading;
         int moveCounts = (int) (distance * countsPerInch);
