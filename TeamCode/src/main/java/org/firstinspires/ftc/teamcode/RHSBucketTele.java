@@ -30,11 +30,11 @@ public class RHSBucketTele extends LinearOpMode {
     static final int ADJUST_ARM_INCREMENT = 1;
     static final double MAX_POWER = 0.4;
     // These set the range for the gripper servo.
-    static final double GRIPPER_MIN_ANGLE = 5;
+    static final double GRIPPER_MIN_ANGLE = 0;
     static final double GRIPPER_MAX_ANGLE = 45;
     // These set the open and close positions
-    static final double GRIPPER_OPEN = 45;
-    static final double GRIPPER_CLOSED = 5;
+    static final double GRIPPER_OPEN = 12;
+    static final double GRIPPER_CLOSED = 24;
 
     private MotorEx armMotor = null;
     private ElevatorFeedforward armFeedForward;
@@ -120,7 +120,7 @@ public class RHSBucketTele extends LinearOpMode {
                     gamePadDrive.getRightX());
 
             ProcessArm();
-//            ProcessGripper();
+            ProcessGripper();
             SendTelemetry();
         }
     }

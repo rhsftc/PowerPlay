@@ -52,8 +52,12 @@ public class RHSBucketAuto extends LinearOpMode {
 
     private int pathSegment;
     private StartPosition startPosition = StartPosition.NONE;
-    private double GRIPPER_MIN_ANGLE = 5;
-    private double GRIPPER_MAX_ANGLE = 45;
+    // These set the range for the gripper servo.
+    static final double GRIPPER_MIN_ANGLE = 0;
+    static final double GRIPPER_MAX_ANGLE = 45;
+    // These set the open and close positions
+    static final double GRIPPER_OPEN = 12;
+    static final double GRIPPER_CLOSED = 23;
     private int STRAFE_TIMEOUT = 3;     //Time to wait for strafing to finish.
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
@@ -232,7 +236,7 @@ public class RHSBucketAuto extends LinearOpMode {
                 case 4:
                     stopAllMotors(true);
 //                TODO: Wait here so drive can read telemetry. Remove this after testing.
-                    while (!isStopRequested()) {
+                    while (!isStopRequested() && opModeIsActive()) {
                         sendTelemetry();
                     }
 
@@ -587,11 +591,11 @@ public class RHSBucketAuto extends LinearOpMode {
 
     public void openGripper() {
 
-        gripperServo.turnToAngle(15);
+        gripperServo.turnToAngle(GRIPPER_OPEN);
     }
 
     public void closeGripper() {
-        gripperServo.turnToAngle(45);
+        gripperServo.turnToAngle(GRIPPER_CLOSED);
     }
 
     public enum StartPosition {
