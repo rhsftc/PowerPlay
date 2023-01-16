@@ -137,7 +137,7 @@ public class RHSBucketAuto extends LinearOpMode {
 
         gamePadDrive = new GamepadEx(gamepad1);
 
-        simpleFeedForward = new SimpleMotorFeedforward(2, 5);
+        simpleFeedForward = new SimpleMotorFeedforward(2, 10);
         backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
         backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
         frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
@@ -324,7 +324,7 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion
-        stopAllMotors(true);
+        stopAllMotors(false);
     }
 
     /**
@@ -451,8 +451,8 @@ public class RHSBucketAuto extends LinearOpMode {
 
 //        leftMotors.set(leftSpeed);
 //        rightMotors.set(rightSpeed);
-        leftMotors.set(simpleFeedForward.calculate(leftSpeed, 5));
-        rightMotors.set(simpleFeedForward.calculate(rightSpeed, 5));
+        leftMotors.set(simpleFeedForward.calculate(leftSpeed));
+        rightMotors.set(simpleFeedForward.calculate(rightSpeed));
 
         sendTelemetry();
     }
