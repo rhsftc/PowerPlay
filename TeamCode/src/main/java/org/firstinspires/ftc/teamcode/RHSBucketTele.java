@@ -22,6 +22,8 @@ import java.util.function.BooleanSupplier;
 public class RHSBucketTele extends LinearOpMode {
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 3.778;
+    static final double ARM_DRIVE_REDUCTION = .20;
+    static final double ARM_WHEEL_DIAMETER_INCHES = 2;
     static final int LOW_JUNCTION = 14;
     static final int MEDIUM_JUNCTION = 24;
     static final int HIGH_JUNCTION = 34;
@@ -53,12 +55,28 @@ public class RHSBucketTele extends LinearOpMode {
     private double countsPerMotorRev = 480;
     private double motorRPM = 300;
     private double countsPerInch = 0;
+    private double armCountsPerMotorRev = 0;
+    private double armCountsPerInch = 0;
 
 
     public void runOpMode() {
+        // Bulk reads
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        // Important: Set all Expansion hubs to use the AUTO Bulk Caching mode
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
         //TODO This arm name is temporary for testing.
         armMotor = new MotorEx(hardwareMap, "armmotor", Motor.GoBILDA.RPM_435);
         armFeedForward = new ElevatorFeedforward(10, 20, 30);
+
+        // This is the arm motor.
+        armCountsPerMotorRev = armMotor.ACHIEVABLE_MAX_TICKS_PER_SECOND;
+        armCountsPerInch = ((armCountsPerMotorRev * ARM_DRIVE_REDUCTION) / (ARM_WHEEL_DIAMETER_INCHES * 3.145));
+
+        // This is for drive motors
+        countsPerInch = ((countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415));
 
         MotorEx frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
         MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
@@ -77,10 +95,7 @@ public class RHSBucketTele extends LinearOpMode {
         armMotor.setRunMode(Motor.RunMode.PositionControl);
         armMotor.setPositionCoefficient(.05);
         armMotor.setPositionTolerance(10);
-
-//        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
-//        motorRPM = backLeftDrive.getMaxRPM();
-        countsPerInch = ((countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415));
+        armMotor.resetEncoder();
 
         // Move arm to start position
         moveArm(ArmPosition.ground);
@@ -93,22 +108,15 @@ public class RHSBucketTele extends LinearOpMode {
         closeClaw = () -> !gamePadArm.isDown(GamepadKeys.Button.LEFT_BUMPER)
                 && gamePadArm.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER);
 
-        // Bulk reads
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-        // Important: Set all Expansion hubs to use the AUTO Bulk Caching mode
-        for (LynxModule module : allHubs) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-
         gamePadDrive = new GamepadEx(gamepad1);
         gamePadArm = new GamepadEx(gamepad2);
         MecanumDrive drive = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
 
-        telemetry.addData("Achievable Ticks", countsPerMotorRev);
-        telemetry.addData("RPM", motorRPM);
-        telemetry.addData("Counts/inch", countsPerInch);
-        telemetry.update();
+//        telemetry.addData("Achievable Ticks", countsPerMotorRev);
+//        telemetry.addData("RPM", motorRPM);
+//        telemetry.addData("Counts/inch", countsPerInch);
+//        telemetry.update();
 
         waitForStart();
         while (opModeIsActive() && !isStopRequested()) {
@@ -179,22 +187,22 @@ public class RHSBucketTele extends LinearOpMode {
         armPosition = armMotor.getCurrentPosition();
         switch (position) {
             case ground:
-                armTarget = HOME_POSITION * (int) countsPerInch;
+                armTarget = HOME_POSITION * (int) armCountsPerInch;
                 break;
             case low:
-                armTarget = (LOW_JUNCTION * (int) countsPerInch);
+                armTarget = (LOW_JUNCTION * (int) armCountsPerInch);
                 break;
             case medium:
-                armTarget = (MEDIUM_JUNCTION * (int) countsPerInch);
+                armTarget = (MEDIUM_JUNCTION * (int) armCountsPerInch);
                 break;
             case high:
-                armTarget = (HIGH_JUNCTION * (int) countsPerInch);
+                armTarget = (HIGH_JUNCTION * (int) armCountsPerInch);
                 break;
             case adjustUp:
-                armTarget = armPosition + (ADJUST_ARM_INCREMENT * (int) countsPerInch);
+                armTarget = armPosition + (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
                 break;
             case adjustDown:
-                armTarget = armPosition - (ADJUST_ARM_INCREMENT * (int) countsPerInch);
+                armTarget = armPosition - (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
                 break;
             default:
                 armTarget = 0;
@@ -206,8 +214,8 @@ public class RHSBucketTele extends LinearOpMode {
         armMotor.setTargetPosition(armTarget);
 
         while (!armMotor.atTargetPosition() && !isStopRequested()) {
-            armMotor.set(MAX_POWER);
-//            armMotor.set(armFeedForward.calculate(MAX_POWER));
+//            armMotor.set(MAX_POWER);
+            armMotor.set(armFeedForward.calculate(MAX_POWER));
             armPosition = armMotor.getCurrentPosition();
             armDistance = armMotor.getDistance();
             armVelocity = armMotor.getVelocity();
