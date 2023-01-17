@@ -9,8 +9,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @TeleOp(name = "FTCLib Servo", group = "test")
 //@Disabled
 public class RHSServoTest extends LinearOpMode {
-    private final double MAX_ANGLE = 45;
-    private final double MIN_ANGLE = 0;
+    private final double MAX_ANGLE = 24;
+    private final double MIN_ANGLE = 12;
     private SimpleServo servo;
 
     @Override
@@ -22,14 +22,14 @@ public class RHSServoTest extends LinearOpMode {
         telemetry.update();
         waitForStart();
         while (opModeIsActive()) {
-            if (gamepad1.dpad_left) {
-                servo.turnToAngle(40, AngleUnit.DEGREES);
+            if (gamepad1.dpad_up) {
+                servo.turnToAngle(12, AngleUnit.DEGREES);
             } else if (gamepad1.dpad_right) {
-                servo.turnToAngle(10, AngleUnit.DEGREES);
+                servo.turnToAngle(16, AngleUnit.DEGREES);
             } else if (gamepad1.dpad_down) {
                 servo.turnToAngle(20, AngleUnit.DEGREES);
-            } else if (gamepad1.dpad_up) {
-                servo.turnToAngle(0, AngleUnit.DEGREES);
+            } else if (gamepad1.dpad_left) {
+                servo.turnToAngle(24, AngleUnit.DEGREES);
             } else if (gamepad1.x) {
                 servo.setPosition(0);
             } else if (gamepad1.y) {
