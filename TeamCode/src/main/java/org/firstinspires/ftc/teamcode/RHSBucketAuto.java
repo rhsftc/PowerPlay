@@ -49,15 +49,14 @@ public class RHSBucketAuto extends LinearOpMode {
     // How close must the heading get to the target before moving to next step.
     // Requiring more accuracy (a smaller number) will often make the turn take longer to get into the final position.
     static final double HEADING_THRESHOLD = 1.0;
-
-    private int pathSegment;
-    private StartPosition startPosition = StartPosition.NONE;
     // These set the range for the gripper servo.
     static final double GRIPPER_MIN_ANGLE = 0;
     static final double GRIPPER_MAX_ANGLE = 45;
     // These set the open and close positions
     static final double GRIPPER_OPEN = 12;
     static final double GRIPPER_CLOSED = 23;
+    private int pathSegment;
+    private StartPosition startPosition = StartPosition.NONE;
     private int STRAFE_TIMEOUT = 3;     //Time to wait for strafing to finish.
     private SleeveDetection sleeveDetection;
     private OpenCvCamera camera;
@@ -137,11 +136,16 @@ public class RHSBucketAuto extends LinearOpMode {
 
         gamePadDrive = new GamepadEx(gamepad1);
 
+//TODO:        Use this for GoBilda motors.
+//        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
+//        motorRPM = backLeftDrive.getMaxRPM();
+        countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
+
         simpleFeedForward = new SimpleMotorFeedforward(2, 10);
-        backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
-        backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
-        frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
-        frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive");
+        backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive", countsPerMotorRev, motorRPM);
+        backRightDrive = new MotorEx(hardwareMap, "rightbackdrive", countsPerMotorRev, motorRPM);
+        frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive", countsPerMotorRev, motorRPM);
+        frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive", countsPerMotorRev, motorRPM);
         backLeftDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         backRightDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         frontLeftDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
@@ -164,11 +168,6 @@ public class RHSBucketAuto extends LinearOpMode {
 
         leftMotors = new MotorGroup(backLeftDrive, frontLeftDrive);
         rightMotors = new MotorGroup(backRightDrive, frontRightDrive);
-
-//TODO:        Use this for GoBilda motors.
-//        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
-//        motorRPM = backLeftDrive.getMaxRPM();
-        countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
         gripperServo = new SimpleServo(hardwareMap, "servo1", GRIPPER_MIN_ANGLE, GRIPPER_MAX_ANGLE);
         gripperServo.setInverted(true);
@@ -208,24 +207,24 @@ public class RHSBucketAuto extends LinearOpMode {
         while (opModeIsActive() && !isStopRequested()) {
             switch (pathSegment) {
                 case 1:
-                    driveStraight(DRIVE_SPEED, 18, 0, 3);
-                    sleep(2000);
+                    driveStraight(DRIVE_SPEED, 26, 0, 3);
+                    sleep(750);
                     pathSegment = 2;
                     break;
                 case 2:
                     // Where did the camera tell us to park?
                     switch (parkLocation) {
                         case LEFT:
-                            strafeRobot(DRIVE_SPEED, 12, 270, STRAFE_TIMEOUT);
+                            strafeRobot(DRIVE_SPEED, 24, 270, STRAFE_TIMEOUT);
                             break;
                         case CENTER:
                             break;
                         case RIGHT:
-                            strafeRobot(DRIVE_SPEED, 12, 90, STRAFE_TIMEOUT);
+                            strafeRobot(DRIVE_SPEED, 24, 90, STRAFE_TIMEOUT);
                             break;
                     }
 
-                    sleep(1000);
+                    sleep(750);
                     pathSegment = 4;
                     break;
                 case 3:
@@ -234,7 +233,7 @@ public class RHSBucketAuto extends LinearOpMode {
                     pathSegment = 4;
                     break;
                 case 4:
-                    stopAllMotors(true);
+                    stopAllMotors();
 //                TODO: Wait here so drive can read telemetry. Remove this after testing.
                     while (!isStopRequested() && opModeIsActive()) {
                         sendTelemetry();
@@ -324,7 +323,7 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion
-        stopAllMotors(false);
+        stopAllMotors();
     }
 
     /**
@@ -363,7 +362,7 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion;
-        stopAllMotors(true);
+        stopAllMotors();
 //        moveRobot(0, 0);
     }
 
@@ -398,7 +397,7 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion;
-        stopAllMotors(true);
+        stopAllMotors();
 //        moveRobot(0, 0);
     }
 
@@ -449,10 +448,10 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-//        leftMotors.set(leftSpeed);
-//        rightMotors.set(rightSpeed);
-        leftMotors.set(simpleFeedForward.calculate(leftSpeed));
-        rightMotors.set(simpleFeedForward.calculate(rightSpeed));
+        leftMotors.set(leftSpeed);
+        rightMotors.set(rightSpeed);
+//        leftMotors.set(simpleFeedForward.calculate(leftSpeed));
+//        rightMotors.set(simpleFeedForward.calculate(rightSpeed));
 
         sendTelemetry();
     }
@@ -514,7 +513,7 @@ public class RHSBucketAuto extends LinearOpMode {
             sendTelemetry();
         }
 
-        stopAllMotors(true);
+        stopAllMotors();
     }
 
     /**
@@ -558,18 +557,11 @@ public class RHSBucketAuto extends LinearOpMode {
         frontRightPosition = frontRightDrive.getCurrentPosition();
     }
 
-    public void stopAllMotors(boolean useSet) {
-        if (useSet) {
-            backLeftDrive.set(0);
-            backRightDrive.set(0);
-            frontLeftDrive.set(0);
-            frontRightDrive.set(0);
-        } else {
-            backLeftDrive.stopMotor();
-            backRightDrive.stopMotor();
-            frontLeftDrive.stopMotor();
-            frontRightDrive.stopMotor();
-        }
+    public void stopAllMotors() {
+        backLeftDrive.stopMotor();
+        backRightDrive.stopMotor();
+        frontLeftDrive.stopMotor();
+        frontRightDrive.stopMotor();
     }
 
     /**
