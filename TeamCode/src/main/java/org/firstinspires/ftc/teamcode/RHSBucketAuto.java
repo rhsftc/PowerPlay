@@ -228,16 +228,16 @@ public class RHSBucketAuto extends LinearOpMode {
                     pathSegment = 4;
                     break;
                 case 3:
-                    turnToHeading(TURN_SPEED, 45, 3);
-                    sleep(1000);
+                    turnToHeading(TURN_SPEED, -45, 3);
+                    sleep(750);
                     pathSegment = 4;
                     break;
                 case 4:
                     stopAllMotors();
 //                TODO: Wait here so drive can read telemetry. Remove this after testing.
-                    while (!isStopRequested() && opModeIsActive()) {
-                        sendTelemetry();
-                    }
+//                    while (!isStopRequested() && opModeIsActive()) {
+//                        sendTelemetry();
+//                    }
 
                     telemetry.addData("Status", "Path complete.");
                     telemetry.update();
@@ -448,10 +448,10 @@ public class RHSBucketAuto extends LinearOpMode {
             rightSpeed /= max;
         }
 
-        leftMotors.set(leftSpeed);
-        rightMotors.set(rightSpeed);
-//        leftMotors.set(simpleFeedForward.calculate(leftSpeed));
-//        rightMotors.set(simpleFeedForward.calculate(rightSpeed));
+//        leftMotors.set(leftSpeed);
+//        rightMotors.set(rightSpeed);
+        leftMotors.set(simpleFeedForward.calculate(leftSpeed));
+        rightMotors.set(simpleFeedForward.calculate(rightSpeed));
 
         sendTelemetry();
     }
