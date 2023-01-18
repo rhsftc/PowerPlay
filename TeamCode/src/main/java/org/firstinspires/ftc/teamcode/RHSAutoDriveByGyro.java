@@ -90,7 +90,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name = "Drive By Imu", group = "test")
+@Autonomous(name = "Drive By Imu", group = "autonomous")
 //@Disabled
 public class RHSAutoDriveByGyro extends LinearOpMode {
 

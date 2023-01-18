@@ -42,7 +42,7 @@ import java.util.List;
 /**
  * Demonstrates empty OpMode
  */
-@TeleOp(name = "FtcLib Motor Log", group = "ftclib")
+@TeleOp(name = "FtcLib Motor Log", group = "test")
 //@Disabled
 public class RHSMotorLogging extends LinearOpMode {
     // Calculate the COUNTS_PER_INCH for your specific drive train.

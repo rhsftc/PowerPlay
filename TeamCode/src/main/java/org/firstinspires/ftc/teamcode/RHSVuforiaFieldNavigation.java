@@ -34,7 +34,6 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XZY;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -75,7 +74,7 @@ import java.util.List;
  * is explained below.
  */
 
-@TeleOp(name = "Vuforia Field Nav", group = "test")
+@TeleOp(name = "Vuforia Field Nav", group = "concept")
 //@Disabled
 public class RHSVuforiaFieldNavigation extends LinearOpMode {
 

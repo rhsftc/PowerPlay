@@ -66,7 +66,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this Op Mode to the Driver Station OpMode list
  */
-@TeleOp(name = "Color", group = "test")
+@TeleOp(name = "Color Sensor Tester", group = "test")
 //@Disabled
 public class RHSSensorColor extends LinearOpMode {
 

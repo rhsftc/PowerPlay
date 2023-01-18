@@ -40,7 +40,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Not the use in a linear op mode is slightly different than an interative op mode.
  */
 
-@Autonomous(name = "Options Menu Linear", group = "autonomous", preselectTeleOp = "Color")
+@Autonomous(name = "Options Menu Linear", group = "autonomous", preselectTeleOp = "FTCLib Servo")
 //@Disabled
 public class RHSConfigMenuLinear extends LinearOpMode {
 

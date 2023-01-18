@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 
 
-@TeleOp(name = "Bucket Tele", group = "FtcLib")
+@TeleOp(name = "Bucket Tele", group = "test")
 //@Disabled
 public class RHSBucketTele extends LinearOpMode {
     static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.

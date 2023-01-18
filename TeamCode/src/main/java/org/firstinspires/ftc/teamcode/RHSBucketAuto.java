@@ -28,7 +28,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.List;
 
-@Autonomous(name = "Bucket Auto", group = "FtcLib")
+@Autonomous(name = "Bucket Auto", group = "autonomous")
 public class RHSBucketAuto extends LinearOpMode {
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV

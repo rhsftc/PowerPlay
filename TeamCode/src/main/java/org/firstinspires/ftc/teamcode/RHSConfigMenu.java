@@ -47,7 +47,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name = "Options Menu", group = "autonomous", preselectTeleOp = "Color")
+@Autonomous(name = "Options Menu", group = "autonomous", preselectTeleOp = "FTCLib Servo")
 //@Disabled
 public class RHSConfigMenu extends OpMode {
     AutonomousConfiguration autonomousConfiguration = new AutonomousConfiguration();
