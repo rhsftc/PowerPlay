@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -61,7 +60,6 @@ public class RHSMotorLogging extends LinearOpMode {
     double countsPerInch = 0;
     Datalog datalog;
     private MotorEx leftBackDrive = null;
-    private SimpleMotorFeedforward motorFeedforward = null;
     private double driveSpeed = 0;
     private int leftBackTarget = 0;
     private int leftBackPosition = 0;
@@ -75,7 +73,6 @@ public class RHSMotorLogging extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         // Important Step 1:  Make sure you use DcMotorEx when you instantiate your motors.
         leftBackDrive = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
-        motorFeedforward = new SimpleMotorFeedforward(10, 20, 30);
 
         countsPerMotorRev = leftBackDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
         motorRPM = leftBackDrive.getMaxRPM();
@@ -118,8 +115,9 @@ public class RHSMotorLogging extends LinearOpMode {
      */
     private void sendTelemetry() {
         telemetry.addData("Status", "Run Time: " + runtime.toString());
+        telemetry.addData("Target Position", leftBackCorrectedVelocity);
         telemetry.addData("Position", "%d", leftBackPosition);
-        telemetry.addData("Target Velocity", "%6.2f", driveSpeed);
+        telemetry.addData("Target Speed", "%6.2f", driveSpeed);
         telemetry.addData("Velocity", "%6.2f", leftBackVelocity);
         telemetry.addData("Corrected Velocity", "%6.2f\n", leftBackCorrectedVelocity);
         telemetry.update();
@@ -149,19 +147,16 @@ public class RHSMotorLogging extends LinearOpMode {
 
         leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
         leftBackDrive.setPositionCoefficient(0.05);
-        leftBackDrive.setPositionTolerance(15);
+        leftBackDrive.setPositionTolerance(5);
         leftBackDrive.setTargetPosition(leftBackTarget);
         // keep looping while we are still active, and motors are running.
-        while (!leftBackDrive.atTargetPosition() &&
-                driveTimer.time() < driveTime) {
+//        while (!leftBackDrive.atTargetPosition() &&
+//                driveTimer.time() < driveTime) {
+        while (opModeIsActive() && !isStopRequested()) {
             moveRobot(maxDriveSpeed);
-            // Display drive status for the driver.
+//            // Display drive status for the driver.
             sendTelemetry();
         }
-
-        // Stop all motion & Turn off RUN_TO_POSITION
-        moveRobot(0);
-        leftBackDrive.setRunMode(Motor.RunMode.VelocityControl);
     }
 
     /**
@@ -176,8 +171,8 @@ public class RHSMotorLogging extends LinearOpMode {
         }
 
         driveSpeed = leftSpeed;
+        leftBackDrive.setVelocity(300);
         leftBackDrive.set(driveSpeed);
-//        leftBackDrive.set(motorFeedforward.calculate(driveSpeed, 0));
 
         leftBackVelocity = leftBackDrive.getVelocity();
         leftBackPosition = leftBackDrive.getCurrentPosition();
