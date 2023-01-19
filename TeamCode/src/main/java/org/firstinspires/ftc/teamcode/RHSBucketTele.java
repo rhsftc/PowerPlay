@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
@@ -49,6 +48,7 @@ public class RHSBucketTele extends LinearOpMode {
     private int armTarget = 0;
     private int armPosition = 0;
     private double armVelocity = 0;
+    private double armCorrectedVelocity = 0;
     private double armDistance = 0;
     private double armAcceleration = 0;
     // These are set in init.
@@ -60,16 +60,9 @@ public class RHSBucketTele extends LinearOpMode {
 
 
     public void runOpMode() {
-        // Bulk reads
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-        // Important: Set all Expansion hubs to use the AUTO Bulk Caching mode
-        for (LynxModule module : allHubs) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
-
         //TODO This arm name is temporary for testing.
-        armMotor = new MotorEx(hardwareMap, "armmotor", Motor.GoBILDA.RPM_435);
-        armFeedForward = new ElevatorFeedforward(10, 20, 30);
+        armMotor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
+        armFeedForward = new ElevatorFeedforward(10, 10, 20);
 
         // This is the arm motor.
         armCountsPerMotorRev = armMotor.ACHIEVABLE_MAX_TICKS_PER_SECOND;
@@ -79,26 +72,28 @@ public class RHSBucketTele extends LinearOpMode {
         countsPerInch = ((countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415));
 
         MotorEx frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive");
-        MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
+//        MotorEx backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive");
         MotorEx frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive");
         MotorEx backRightDrive = new MotorEx(hardwareMap, "rightbackdrive");
 
-        frontLeftDrive.setInverted(true);
-        backLeftDrive.setInverted(true);
+        // Bulk reads
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        // Important: Set all Expansion hubs to use the AUTO Bulk Caching mode
+        for (LynxModule module : allHubs) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
+        frontLeftDrive.setInverted(false);
+//        backLeftDrive.setInverted(true);
         frontRightDrive.setInverted(true);
         backRightDrive.setInverted(true);
 
         dataLog = new Datalog("datalogarm");
 
-        armMotor.setInverted(false);
+        armMotor.setInverted(true);
         armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        armMotor.setRunMode(Motor.RunMode.PositionControl);
-        armMotor.setPositionCoefficient(.05);
-        armMotor.setPositionTolerance(10);
+//        armMotor.setRunMode(Motor.RunMode.PositionControl);
         armMotor.resetEncoder();
-
-        // Move arm to start position
-        moveArm(ArmPosition.ground);
 
         GripperServo = new SimpleServo(hardwareMap, "servo1", GRIPPER_MIN_ANGLE, GRIPPER_MAX_ANGLE, AngleUnit.DEGREES);
         GripperServo.setInverted(true);
@@ -110,25 +105,33 @@ public class RHSBucketTele extends LinearOpMode {
 
         gamePadDrive = new GamepadEx(gamepad1);
         gamePadArm = new GamepadEx(gamepad2);
-        MecanumDrive drive = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
+
+        // Move arm to start position
+//        moveArm(ArmPosition.HOME);
+
+//        MecanumDrive drive = new MecanumDrive(frontLeftDrive, frontRightDrive, backLeftDrive, backRightDrive);
 
 
-//        telemetry.addData("Achievable Ticks", countsPerMotorRev);
-//        telemetry.addData("RPM", motorRPM);
-//        telemetry.addData("Counts/inch", countsPerInch);
-//        telemetry.update();
+        telemetry.addData("Arm Counts per Inch", countsPerMotorRev);
+        telemetry.addData("Arm Current Position", armMotor.getCurrentPosition());
+        telemetry.update();
 
         waitForStart();
         while (opModeIsActive() && !isStopRequested()) {
             gamePadDrive.readButtons();
             gamePadArm.readButtons();
 
-            drive.driveRobotCentric(gamePadDrive.getLeftX(),
-                    gamePadDrive.getLeftY(),
-                    gamePadDrive.getRightX());
+//            drive.driveRobotCentric(gamePadDrive.getLeftX(),
+//                    gamePadDrive.getLeftY(),
+//                    gamePadDrive.getRightX());
 
             ProcessArm();
             ProcessGripper();
+            armPosition = armMotor.getCurrentPosition();
+//            armDistance = armMotor.getDistance();
+//            armVelocity = armMotor.getVelocity();
+//            armCorrectedVelocity = armMotor.getCorrectedVelocity();
+            armAcceleration = armMotor.getAcceleration();
             SendTelemetry();
         }
     }
@@ -136,15 +139,17 @@ public class RHSBucketTele extends LinearOpMode {
     public void SendTelemetry() {
         telemetry.addData("Target Position", "%d", armTarget);
         telemetry.addData("Current Position", armPosition);
+        telemetry.addData("Velocity", armVelocity);
+        telemetry.addData("Corrected Velocity", armCorrectedVelocity);
         telemetry.addData("Acceleration", armAcceleration);
-//        telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
+        telemetry.addData("Servo Position", "%6.2f - %6.2f", GripperServo.getPosition(), GripperServo.getAngle());
         telemetry.update();
     }
 
     public void ProcessGripper() {
         if (openClaw.getAsBoolean()) {
             GripperServo.turnToAngle(GRIPPER_OPEN);
-            moveArm(ArmPosition.ground);
+//            moveArm(ArmPosition.ground);
         }
 
         if (closeClaw.getAsBoolean()) {
@@ -155,77 +160,81 @@ public class RHSBucketTele extends LinearOpMode {
     public void ProcessArm() {
         // Adjust position
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            moveArm(ArmPosition.adjustDown);
+            moveArm(ArmPosition.ADJUST_DOWN);
         }
 
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            moveArm(ArmPosition.adjustUp);
+            moveArm(ArmPosition.ADJUST_UP);
         }
 
         // Low junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.A)) {
-            moveArm(ArmPosition.low);
+            moveArm(ArmPosition.LOW);
         }
 
         // medium junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.B)) {
-            moveArm(ArmPosition.medium);
+            moveArm(ArmPosition.MEDIUM);
         }
 
         // high junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.Y)) {
-            moveArm(ArmPosition.high);
+            moveArm(ArmPosition.HIGH);
         }
 
         // ground junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.X)) {
-            moveArm(ArmPosition.ground);
+            moveArm(ArmPosition.HOME);
         }
     }
 
     public void moveArm(ArmPosition position) {
         armPosition = armMotor.getCurrentPosition();
         switch (position) {
-            case ground:
+            case HOME:
                 armTarget = HOME_POSITION * (int) armCountsPerInch;
                 break;
-            case low:
+            case LOW:
                 armTarget = (LOW_JUNCTION * (int) armCountsPerInch);
                 break;
-            case medium:
+            case MEDIUM:
                 armTarget = (MEDIUM_JUNCTION * (int) armCountsPerInch);
                 break;
-            case high:
+            case HIGH:
                 armTarget = (HIGH_JUNCTION * (int) armCountsPerInch);
                 break;
-            case adjustUp:
+            case ADJUST_UP:
                 armTarget = armPosition + (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
                 break;
-            case adjustDown:
+            case ADJUST_DOWN:
                 armTarget = armPosition - (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
                 break;
             default:
-                armTarget = 0;
+                return;
         }
 
         // Prevent arm moving below HOME_POSITION
-        armTarget = Math.max(armTarget, HOME_POSITION);
+        armTarget = Math.max(armTarget, HOME_POSITION * (int) armCountsPerInch);
         armMotor.setRunMode(Motor.RunMode.PositionControl);
+        armMotor.setPositionCoefficient(.05);
+        armMotor.setPositionTolerance(25);
         armMotor.setTargetPosition(armTarget);
+        armMotor.set(0);
 
         while (!armMotor.atTargetPosition() && !isStopRequested()) {
-//            armMotor.set(MAX_POWER);
-            armMotor.set(armFeedForward.calculate(MAX_POWER));
-            armPosition = armMotor.getCurrentPosition();
-            armDistance = armMotor.getDistance();
-            armVelocity = armMotor.getVelocity();
-            armMotor.encoder.getRawVelocity();
-            armAcceleration = armMotor.getAcceleration();
-            LogData();
+            armMotor.set(MAX_POWER);
+//            armMotor.set(armFeedForward.calculate(MAX_POWER));
+//            armPosition = armMotor.getCurrentPosition();
+//            armDistance = armMotor.getDistance();
+//            armVelocity = armMotor.getVelocity();
+//            armCorrectedVelocity = armMotor.getCorrectedVelocity();
+//            armAcceleration = armMotor.getAcceleration();
+//            LogData();
             SendTelemetry();
         }
 
-        armMotor.stopMotor();
+//        armMotor.setVelocity(100);
+//        armMotor.stopMotor();
     }
 
     public void LogData() {
@@ -238,12 +247,12 @@ public class RHSBucketTele extends LinearOpMode {
     }
 
     public enum ArmPosition {
-        ground,
-        low,
-        medium,
-        high,
-        adjustUp,
-        adjustDown
+        HOME,
+        LOW,
+        MEDIUM,
+        HIGH,
+        ADJUST_UP,
+        ADJUST_DOWN
     }
 
     public static class Datalog {

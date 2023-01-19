@@ -59,7 +59,7 @@ public class RHSMotorLogging extends LinearOpMode {
     double motorRPM = 0;
     double countsPerInch = 0;
     Datalog datalog;
-    private MotorEx leftBackDrive = null;
+    private MotorEx armMotor = null;
     private double driveSpeed = 0;
     private int leftBackTarget = 0;
     private int leftBackPosition = 0;
@@ -71,16 +71,17 @@ public class RHSMotorLogging extends LinearOpMode {
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
-        // Important Step 1:  Make sure you use DcMotorEx when you instantiate your motors.
-        leftBackDrive = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
+        armMotor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
 
-        countsPerMotorRev = leftBackDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
-        motorRPM = leftBackDrive.getMaxRPM();
-        leftBackDistance = leftBackDrive.getDistance();
+        countsPerMotorRev = armMotor.ACHIEVABLE_MAX_TICKS_PER_SECOND;
+        motorRPM = armMotor.getMaxRPM();
+        leftBackDistance = armMotor.getDistance();
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
-        leftBackDrive.setInverted(true);
-        leftBackDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        armMotor.setInverted(true);
+        armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        armMotor.resetEncoder();
 
+        // Important Step 1: Instantiate motor first and with MotoeEc or DCMotorEx.
         // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
         // Important Step 3: Set all Expansion hubs to use the AUTO Bulk Caching mode
@@ -114,8 +115,8 @@ public class RHSMotorLogging extends LinearOpMode {
      * Display the various control parameters while driving
      */
     private void sendTelemetry() {
-        telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("Target Position", leftBackCorrectedVelocity);
+        telemetry.addData("Status", "Run Time: " + runtime.seconds());
+        telemetry.addData("Target Position", leftBackTarget);
         telemetry.addData("Position", "%d", leftBackPosition);
         telemetry.addData("Target Speed", "%6.2f", driveSpeed);
         telemetry.addData("Velocity", "%6.2f", leftBackVelocity);
@@ -142,13 +143,13 @@ public class RHSMotorLogging extends LinearOpMode {
 
         // Determine new target position, and pass to motor controller
         int moveCounts = (int) (distance * countsPerInch);
-        leftBackPosition = leftBackDrive.getCurrentPosition();
+        leftBackPosition = armMotor.getCurrentPosition();
         leftBackTarget = leftBackPosition + moveCounts;
 
-        leftBackDrive.setRunMode(Motor.RunMode.PositionControl);
-        leftBackDrive.setPositionCoefficient(0.05);
-        leftBackDrive.setPositionTolerance(5);
-        leftBackDrive.setTargetPosition(leftBackTarget);
+        armMotor.setRunMode(Motor.RunMode.PositionControl);
+        armMotor.setPositionCoefficient(0.05);
+        armMotor.setPositionTolerance(5);
+        armMotor.setTargetPosition(leftBackTarget);
         // keep looping while we are still active, and motors are running.
 //        while (!leftBackDrive.atTargetPosition() &&
 //                driveTimer.time() < driveTime) {
@@ -171,14 +172,14 @@ public class RHSMotorLogging extends LinearOpMode {
         }
 
         driveSpeed = leftSpeed;
-        leftBackDrive.setVelocity(300);
-        leftBackDrive.set(driveSpeed);
+//        leftBackDrive.setVelocity(300);
+        armMotor.set(driveSpeed);
 
-        leftBackVelocity = leftBackDrive.getVelocity();
-        leftBackPosition = leftBackDrive.getCurrentPosition();
-        leftBackCorrectedVelocity = leftBackDrive.getCorrectedVelocity();
-        leftBackDistance = leftBackDrive.getDistance();
-        leftBackAcceleration = leftBackDrive.getAcceleration();
+        leftBackVelocity = armMotor.getVelocity();
+        leftBackPosition = armMotor.getCurrentPosition();
+        leftBackCorrectedVelocity = armMotor.getCorrectedVelocity();
+        leftBackDistance = armMotor.getDistance();
+        leftBackAcceleration = armMotor.getAcceleration();
 
         // Log selected values
         datalog.target.set(leftBackTarget);
