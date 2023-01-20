@@ -47,6 +47,7 @@ public class RHSBucketTele extends LinearOpMode {
     private Datalog dataLog;
     private int armTarget = 0;
     private int armPosition = 0;
+    private ArmPosition selectedPosition;
     private double armVelocity = 0;
     private double armCorrectedVelocity = 0;
     private double armDistance = 0;
@@ -90,7 +91,7 @@ public class RHSBucketTele extends LinearOpMode {
 
         dataLog = new Datalog("datalogarm");
 
-        armMotor.setInverted(true);
+        armMotor.setInverted(false);
         armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
 //        armMotor.setRunMode(Motor.RunMode.PositionControl);
         armMotor.resetEncoder();
@@ -126,17 +127,18 @@ public class RHSBucketTele extends LinearOpMode {
 //                    gamePadDrive.getRightX());
 
             ProcessArm();
-            ProcessGripper();
-            armPosition = armMotor.getCurrentPosition();
+//            ProcessGripper();
+//            armPosition = armMotor.getCurrentPosition();
 //            armDistance = armMotor.getDistance();
 //            armVelocity = armMotor.getVelocity();
 //            armCorrectedVelocity = armMotor.getCorrectedVelocity();
-            armAcceleration = armMotor.getAcceleration();
+//            armAcceleration = armMotor.getAcceleration();
             SendTelemetry();
         }
     }
 
     public void SendTelemetry() {
+        telemetry.addData("Selected Position", selectedPosition);
         telemetry.addData("Target Position", "%d", armTarget);
         telemetry.addData("Current Position", armPosition);
         telemetry.addData("Velocity", armVelocity);
@@ -189,6 +191,7 @@ public class RHSBucketTele extends LinearOpMode {
     }
 
     public void moveArm(ArmPosition position) {
+        selectedPosition = position;
         armPosition = armMotor.getCurrentPosition();
         switch (position) {
             case HOME:
