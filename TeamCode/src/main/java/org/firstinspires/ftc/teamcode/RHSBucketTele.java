@@ -31,6 +31,7 @@ public class RHSBucketTele extends LinearOpMode {
     static final int CONE_HEIGHT = 5;
     static final int ADJUST_ARM_INCREMENT = 1;
     static final double MAX_POWER = 0.4;
+    static final double ARM_MAX_POWER = 1;
     // These set the range for the gripper servo.
     static final double GRIPPER_MIN_ANGLE = 0;
     static final double GRIPPER_MAX_ANGLE = 45;
@@ -234,14 +235,10 @@ public class RHSBucketTele extends LinearOpMode {
 //        armMotor.set(0);
 
         while (armMotor.isBusy() && !isStopRequested()) {
-            armMotor.setPower(MAX_POWER);
+            armMotor.setPower(ARM_MAX_POWER);
 //            armMotor.setPower(armFeedForward.calculate(MAX_POWER));
             armPosition = armMotor.getCurrentPosition();
-//            armDistance = armMotor.getDistance();
             armVelocity = armMotor.getVelocity();
-//            armCorrectedVelocity = armMotor.getCorrectedVelocity();
-//            armAcceleration = armMotor.getAcceleration();
-//            LogData();
             SendTelemetry();
         }
 
