@@ -29,6 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -50,9 +51,9 @@ public class RHSMotorLogging extends LinearOpMode {
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double DRIVE_GEAR_REDUCTION = 1.0;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 4.0;     // For figuring circumference
-    static final double DRIVE_SPEED = 0.2;     // Max driving speed for better distance accuracy.
+    static final double DRIVE_GEAR_REDUCTION = .5;     // No External Gearing.
+    static final double WHEEL_DIAMETER_INCHES = 2.5;     // For figuring circumference
+    static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
     private final ElapsedTime runtime = new ElapsedTime();
     // These are set in init.
     double countsPerMotorRev = 0;
@@ -60,6 +61,7 @@ public class RHSMotorLogging extends LinearOpMode {
     double countsPerInch = 0;
     Datalog datalog;
     private MotorEx armMotor = null;
+    private ElevatorFeedforward elevatorFeedForward;
     private double driveSpeed = 0;
     private int leftBackTarget = 0;
     private int leftBackPosition = 0;
@@ -80,6 +82,7 @@ public class RHSMotorLogging extends LinearOpMode {
         armMotor.setInverted(true);
         armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         armMotor.resetEncoder();
+        elevatorFeedForward = new ElevatorFeedforward(10, 10, 20);
 
         // Important Step 1: Instantiate motor first and with MotoeEc or DCMotorEx.
         // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
@@ -146,10 +149,10 @@ public class RHSMotorLogging extends LinearOpMode {
         leftBackPosition = armMotor.getCurrentPosition();
         leftBackTarget = leftBackPosition + moveCounts;
 
+        armMotor.setTargetPosition(leftBackTarget);
         armMotor.setRunMode(Motor.RunMode.PositionControl);
         armMotor.setPositionCoefficient(0.05);
-        armMotor.setPositionTolerance(5);
-        armMotor.setTargetPosition(leftBackTarget);
+        armMotor.setPositionTolerance(10);
         // keep looping while we are still active, and motors are running.
 //        while (!leftBackDrive.atTargetPosition() &&
 //                driveTimer.time() < driveTime) {
