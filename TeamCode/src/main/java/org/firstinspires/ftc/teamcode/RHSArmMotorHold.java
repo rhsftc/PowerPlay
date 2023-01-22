@@ -51,64 +51,58 @@ public class RHSArmMotorHold extends LinearOpMode {
     static final int ADJUST_ARM_INCREMENT = 1;
     static final double MAX_POWER = 0.4;
     // Declare OpMode members.
-    private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime runTime;
     private MotorEx armMotor = null;
     private ElevatorFeedforward armFeedForward;
     private GamepadEx gamePadArm;
-    private GamepadEx gamePadDrive;
     private int armTarget = 0;
     private int armPosition = 0;
     private ArmPosition selectedPosition;
     private double armVelocity = 0;
     private double armCorrectedVelocity = 0;
-    private double armDistance = 0;
     private double armAcceleration = 0;
+    private boolean isAtTarget = false;
     // These are set in init.
-    private double countsPerMotorRev = 480;
-    private double motorRPM = 300;
-    private double countsPerInch = 0;
     private double armCountsPerMotorRev = 0;
     private double armCountsPerInch = 0;
 
     @Override
     public void runOpMode() {
+        runTime = new ElapsedTime();
+
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
         armMotor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
-        armFeedForward = new ElevatorFeedforward(2, 2, 15);
-        // This is the arm motor.
+        armFeedForward = new ElevatorFeedforward(10, 20, 0);
         armCountsPerMotorRev = armMotor.ACHIEVABLE_MAX_TICKS_PER_SECOND;
         armCountsPerInch = ((armCountsPerMotorRev * ARM_DRIVE_REDUCTION) / (ARM_WHEEL_DIAMETER_INCHES * 3.145));
         armMotor.setInverted(false);
         armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-//        gamePadDrive = new GamepadEx(gamepad1);
         gamePadArm = new GamepadEx(gamepad2);
 
-        // Wait for the game to start (driver presses PLAY)
+        // Wait for start
         waitForStart();
+        runTime.reset();
         armMotor.resetEncoder();
-        runtime.reset();
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive() && !isStopRequested()) {
-//            gamePadDrive.readButtons();
             gamePadArm.readButtons();
             ProcessArm();
-            armPosition = armMotor.getCurrentPosition();
-            armDistance = armMotor.getDistance();
-            armVelocity = armMotor.getVelocity();
-            sendTelemetry();
+//            sendTelemetry();
         }
     }
 
     public void sendTelemetry() {
+        telemetry.addData("Run time", runTime);
         telemetry.addData("Selected Position", selectedPosition);
         telemetry.addData("Target Position", "%d", armTarget);
         telemetry.addData("Current Position", armPosition);
         telemetry.addData("Velocity", armVelocity);
         telemetry.addData("Corrected Velocity", armCorrectedVelocity);
         telemetry.addData("Acceleration", armAcceleration);
+        telemetry.addData("At target", isAtTarget);
         telemetry.update();
     }
 
@@ -178,24 +172,22 @@ public class RHSArmMotorHold extends LinearOpMode {
         // Prevent arm moving below HOME_POSITION
         armTarget = Math.max(armTarget, HOME_POSITION * (int) armCountsPerInch);
         armMotor.setTargetPosition(armTarget);
-        armMotor.setRunMode(Motor.RunMode.PositionControl);
-//        armMotor.setPositionCoefficient(.004);
-//        armMotor.setPositionTolerance(25);
+        armMotor.setPositionCoefficient(.003);
+        armMotor.setPositionTolerance(25);
         armMotor.setTargetPosition(armTarget);
-//        armMotor.set(0);
+        armMotor.setRunMode(Motor.RunMode.PositionControl);
 
         while (!armMotor.atTargetPosition() && !isStopRequested()) {
-//            armMotor.set(MAX_POWER);
-            armMotor.set(armFeedForward.calculate(MAX_POWER));
+            armMotor.set(MAX_POWER);
             armPosition = armMotor.getCurrentPosition();
-            armDistance = armMotor.getDistance();
             armVelocity = armMotor.getVelocity();
             armCorrectedVelocity = armMotor.getCorrectedVelocity();
             armAcceleration = armMotor.getAcceleration();
+            isAtTarget = armMotor.atTargetPosition();
             sendTelemetry();
         }
 
-//        armMotor.setVelocity(100);
+//        armMotor.setVelocity(0);
 //        armMotor.stopMotor();
     }
 
