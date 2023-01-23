@@ -29,13 +29,16 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
-import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
+import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 import java.util.List;
 
@@ -51,38 +54,32 @@ public class RHSMotorLogging extends LinearOpMode {
     // For example, use a value of 2.0 for a 12-tooth spur gear driving a 24-tooth spur gear.
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
-    static final double DRIVE_GEAR_REDUCTION = .5;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 2.5;     // For figuring circumference
+    static final double DRIVE_GEAR_REDUCTION = 1;     // No External Gearing.
+    static final double WHEEL_DIAMETER_INCHES = 4;     // For figuring circumference
     static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
     private final ElapsedTime runtime = new ElapsedTime();
     // These are set in init.
-    double countsPerMotorRev = 0;
+    double countsPerMotorRev = 2781;
     double motorRPM = 0;
     double countsPerInch = 0;
     Datalog datalog;
-    private MotorEx armMotor = null;
-    private ElevatorFeedforward elevatorFeedForward;
+    private DcMotorEx leftBackMotor = null;
+    private SimpleMotorFeedforward motorFeedForward;
     private double driveSpeed = 0;
     private int leftBackTarget = 0;
     private int leftBackPosition = 0;
     private double leftBackVelocity = 0;
-    private double leftBackCorrectedVelocity = 0;
-    private double leftBackAcceleration = 0;
-    private double leftBackDistance = 0;
+    private double leftBackCurrent = 0;
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
-        armMotor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
+        leftBackMotor = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
+        leftBackMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        leftBackMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        motorFeedForward = new SimpleMotorFeedforward(10, 5);
 
-        countsPerMotorRev = armMotor.ACHIEVABLE_MAX_TICKS_PER_SECOND;
-        motorRPM = armMotor.getMaxRPM();
-        leftBackDistance = armMotor.getDistance();
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
-        armMotor.setInverted(true);
-        armMotor.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        armMotor.resetEncoder();
-        elevatorFeedForward = new ElevatorFeedforward(10, 10, 20);
 
         // Important Step 1: Instantiate motor first and with MotoeEc or DCMotorEx.
         // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
@@ -96,18 +93,20 @@ public class RHSMotorLogging extends LinearOpMode {
         // Note that the order in which we set datalog fields
         // does *not* matter! The order is configured inside
         // the Datalog class constructor.
-        datalog = new Datalog("datalogMotor");
+        datalog = new Datalog("drivemotor");
 
         while (!opModeIsActive()) {
             telemetry.addData("Counts per Rev", "%6.2f", countsPerMotorRev);
             telemetry.addData("Max RPM", "%6.2f", motorRPM);
             telemetry.addData("Counts per Inch", "%6.2f", countsPerInch);
-            telemetry.addData("Acceleration", "%6.2f", leftBackAcceleration);
+            telemetry.addData("Acceleration", "%6.2f", leftBackCurrent);
             telemetry.update();
         }
 
         waitForStart();
+        leftBackMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         runtime.reset();
+
         driveStraight(DRIVE_SPEED, 24, 10);
         // Stay here to allow time to read display.
         while (opModeIsActive() && !isStopRequested()) {
@@ -123,7 +122,7 @@ public class RHSMotorLogging extends LinearOpMode {
         telemetry.addData("Position", "%d", leftBackPosition);
         telemetry.addData("Target Speed", "%6.2f", driveSpeed);
         telemetry.addData("Velocity", "%6.2f", leftBackVelocity);
-        telemetry.addData("Corrected Velocity", "%6.2f\n", leftBackCorrectedVelocity);
+        telemetry.addData("Current", "%6.2f\n", leftBackCurrent);
         telemetry.update();
     }
 
@@ -146,20 +145,15 @@ public class RHSMotorLogging extends LinearOpMode {
 
         // Determine new target position, and pass to motor controller
         int moveCounts = (int) (distance * countsPerInch);
-        leftBackPosition = armMotor.getCurrentPosition();
+        leftBackPosition = leftBackMotor.getCurrentPosition();
         leftBackTarget = leftBackPosition + moveCounts;
 
-        armMotor.setTargetPosition(leftBackTarget);
-        armMotor.setRunMode(Motor.RunMode.PositionControl);
-        armMotor.setPositionCoefficient(0.05);
-        armMotor.setPositionTolerance(10);
-        // keep looping while we are still active, and motors are running.
-//        while (!leftBackDrive.atTargetPosition() &&
-//                driveTimer.time() < driveTime) {
-        while (opModeIsActive() && !isStopRequested()) {
+        leftBackMotor.setTargetPosition(leftBackTarget);
+        leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        while (opModeIsActive() &&
+                !isStopRequested() &&
+                driveTimer.seconds() < driveTime) {
             moveRobot(maxDriveSpeed);
-//            // Display drive status for the driver.
-            sendTelemetry();
         }
     }
 
@@ -174,24 +168,24 @@ public class RHSMotorLogging extends LinearOpMode {
             leftSpeed /= max;
         }
 
-        driveSpeed = leftSpeed;
-//        leftBackDrive.setVelocity(300);
-        armMotor.set(driveSpeed);
+        while (leftBackMotor.isBusy() &&
+                !isStopRequested()) {
+            driveSpeed = leftSpeed;
+            leftBackMotor.setVelocity(2200);
+            leftBackMotor.setPower(motorFeedForward.calculate(2200));
 
-        leftBackVelocity = armMotor.getVelocity();
-        leftBackPosition = armMotor.getCurrentPosition();
-        leftBackCorrectedVelocity = armMotor.getCorrectedVelocity();
-        leftBackDistance = armMotor.getDistance();
-        leftBackAcceleration = armMotor.getAcceleration();
+            leftBackPosition = leftBackMotor.getCurrentPosition();
+            leftBackVelocity = leftBackMotor.getVelocity();
+            leftBackCurrent = leftBackMotor.getCurrent(CurrentUnit.AMPS);
 
-        // Log selected values
-        datalog.target.set(leftBackTarget);
-        datalog.position.set(leftBackPosition);
-        datalog.velocity.set(leftBackVelocity);
-        datalog.correctedVelocity.set(leftBackCorrectedVelocity);
-        datalog.distance.set(leftBackDistance);
-        datalog.acceleration.set(leftBackAcceleration);
-        datalog.writeLine();
+            // Log selected values
+            datalog.target.set(leftBackTarget);
+            datalog.position.set(leftBackPosition);
+            datalog.velocity.set(leftBackVelocity);
+            datalog.current.set(leftBackCurrent);
+            datalog.writeLine();
+            sendTelemetry();
+        }
     }
 
     /*
@@ -204,11 +198,9 @@ public class RHSMotorLogging extends LinearOpMode {
         // These are all of the fields that we want in the datalog.
         // Note that order here is NOT important. The order is important in the setFields() call below
         public Datalogger.GenericField velocity = new Datalogger.GenericField("Velocity");
-        public Datalogger.GenericField correctedVelocity = new Datalogger.GenericField("CorrectedVelocity");
         public Datalogger.GenericField target = new Datalogger.GenericField("Target");
         public Datalogger.GenericField position = new Datalogger.GenericField("Position");
-        public Datalogger.GenericField distance = new Datalogger.GenericField("Distance");
-        public Datalogger.GenericField acceleration = new Datalogger.GenericField("Acceleration");
+        public Datalogger.GenericField current = new Datalogger.GenericField("Current");
 
         public Datalog(String name) {
             // Build the underlying datalog object
@@ -227,9 +219,7 @@ public class RHSMotorLogging extends LinearOpMode {
                             target,
                             position,
                             velocity,
-                            correctedVelocity,
-                            distance,
-                            acceleration
+                            current
                     )
                     .build();
         }
