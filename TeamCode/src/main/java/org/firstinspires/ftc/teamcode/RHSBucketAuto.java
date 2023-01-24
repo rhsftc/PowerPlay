@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -13,6 +14,9 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -21,6 +25,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -55,7 +60,29 @@ public class RHSBucketAuto extends LinearOpMode {
     // These set the open and close positions
     static final double GRIPPER_OPEN = 12;
     static final double GRIPPER_CLOSED = 23;
+
+    // Arm related
+    static final double ARM_DRIVE_REDUCTION = .5;
+    static final double ARM_WHEEL_DIAMETER_INCHES = 2.5;
+    static final int LOW_JUNCTION = 14;
+    static final int MEDIUM_JUNCTION = 24;
+    static final int HIGH_JUNCTION = 34;
+    static final int HOME_POSITION = 1;
+    static final int CONE_HEIGHT = 5;
+    static final int ADJUST_ARM_INCREMENT = 1;
+    static final double MAX_VELOCITY = 2200;
+    private DcMotorEx armMotor = null;
+    private ElevatorFeedforward armFeedForward;
+    private int armTarget = 0;
+    private int armPosition = 0;
+    private RHSArmMotorHold.ArmPosition selectedPosition;
+    private double armVelocity = 0;
+    private double armCurrent = 0;
+    private double feedForwardCalculate = 0;
+    private boolean isBusy = false;
+
     private int pathSegment;
+    private Datalog dataLog;
     private StartPosition startPosition = StartPosition.NONE;
     private int STRAFE_TIMEOUT = 3;     //Time to wait for strafing to finish.
     private SleeveDetection sleeveDetection;
@@ -77,6 +104,8 @@ public class RHSBucketAuto extends LinearOpMode {
     private double countsPerMotorRev = 480;
     private double motorRPM = 300;
     private double countsPerInch = 0;
+    private double armCountsPerMotorRev = 2781;
+    private double armCountsPerInch = 0;
 
     private int backLeftTarget = 0;
     private int backRightTarget = 0;
@@ -101,6 +130,8 @@ public class RHSBucketAuto extends LinearOpMode {
      */
     @Override
     public void runOpMode() {
+        dataLog = new Datalog("autolog");
+
         // Bulk reads
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
         // Important: Set all Expansion hubs to use the AUTO Bulk Caching mode
@@ -135,6 +166,13 @@ public class RHSBucketAuto extends LinearOpMode {
         });
 
         gamePadDrive = new GamepadEx(gamepad1);
+
+        armMotor = hardwareMap.get(DcMotorEx.class, "armmotor");
+        armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        armFeedForward = new ElevatorFeedforward(8, 20, .8);
+        armCountsPerInch = ((armCountsPerMotorRev * ARM_DRIVE_REDUCTION) / (ARM_WHEEL_DIAMETER_INCHES * 3.145));
 
 //TODO:        Use this for GoBilda motors.
 //        countsPerMotorRev = backLeftDrive.ACHIEVABLE_MAX_TICKS_PER_SECOND;
@@ -516,6 +554,52 @@ public class RHSBucketAuto extends LinearOpMode {
         stopAllMotors();
     }
 
+    public void moveArm(RHSArmMotorHold.ArmPosition position) {
+        selectedPosition = position;
+        armPosition = armMotor.getCurrentPosition();
+        switch (position) {
+            case HOME:
+                armTarget = HOME_POSITION * (int) armCountsPerInch;
+                break;
+            case LOW:
+                armTarget = (LOW_JUNCTION * (int) armCountsPerInch);
+                break;
+            case MEDIUM:
+                armTarget = (MEDIUM_JUNCTION * (int) armCountsPerInch);
+                break;
+            case HIGH:
+                armTarget = (HIGH_JUNCTION * (int) armCountsPerInch);
+                break;
+            case ADJUST_UP:
+                armTarget = armPosition + (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
+                break;
+            case ADJUST_DOWN:
+                armTarget = armPosition - (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
+                break;
+            default:
+                return;
+        }
+
+        // Prevent arm moving below HOME_POSITION
+        armTarget = Math.max(armTarget, HOME_POSITION * (int) armCountsPerInch);
+        armMotor.setTargetPosition(armTarget);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+        armMotor.setPositionPIDFCoefficients(8);
+        armMotor.setVelocity(MAX_VELOCITY);
+
+        while (armMotor.isBusy() && !isStopRequested()) {
+            armVelocity = armMotor.getVelocity();
+            feedForwardCalculate = armFeedForward.calculate(armVelocity);
+            armMotor.setPower(feedForwardCalculate);
+            armPosition = armMotor.getCurrentPosition();
+            armCurrent = armMotor.getCurrent(CurrentUnit.AMPS);
+            isBusy = armMotor.isBusy();
+            logData();
+            sendTelemetry();
+        }
+    }
+
     /**
      * Display the various control parameters while driving
      */
@@ -590,9 +674,71 @@ public class RHSBucketAuto extends LinearOpMode {
         gripperServo.turnToAngle(GRIPPER_CLOSED);
     }
 
+    public void logData() {
+        dataLog.target.set(armTarget);
+        dataLog.position.set(armPosition);
+        dataLog.velocity.set(armVelocity);
+        dataLog.current.set(armCurrent);
+        dataLog.feedforward.set(feedForwardCalculate);
+        dataLog.writeLine();
+    }
+
+    public enum ArmPosition {
+        HOME,
+        LOW,
+        MEDIUM,
+        HIGH,
+        ADJUST_UP,
+        ADJUST_DOWN
+    }
+
     public enum StartPosition {
         RIGHT,
         LEFT,
         NONE
+    }    /*
+     * This class encapsulates all the fields that will go into the datalog.
+     */
+
+    public static class Datalog {
+        // The underlying datalogger object - it cares only about an array of loggable fields
+        private final Datalogger datalogger;
+
+        // These are all of the fields that we want in the datalog.
+        // Note that order here is NOT important. The order is important in the setFields() call below
+        public Datalogger.GenericField velocity = new Datalogger.GenericField("Velocity");
+        public Datalogger.GenericField target = new Datalogger.GenericField("Target");
+        public Datalogger.GenericField position = new Datalogger.GenericField("Position");
+        public Datalogger.GenericField current = new Datalogger.GenericField("Current");
+        public Datalogger.GenericField feedforward = new Datalogger.GenericField("FeedForward");
+
+        public Datalog(String name) {
+            // Build the underlying datalog object
+            datalogger = new Datalogger.Builder()
+
+                    // Pass through the filename
+                    .setFilename(name)
+
+                    // Request an automatic timestamp field
+                    .setAutoTimestamp(Datalogger.AutoTimestamp.DECIMAL_SECONDS)
+
+                    // Tell it about the fields we care to log.
+                    // Note that order *IS* important here! The order in which we list
+                    // the fields is the order in which they will appear in the log.
+                    .setFields(
+                            target,
+                            position,
+                            velocity,
+                            current,
+                            feedforward
+                    )
+                    .build();
+        }
+
+        // Tell the datalogger to gather the values of the fields
+        // and write a new line in the log.
+        public void writeLine() {
+            datalogger.writeLine();
+        }
     }
 }
