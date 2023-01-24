@@ -53,6 +53,7 @@ public class RHSArmMotorHold extends LinearOpMode {
     static final int CONE_HEIGHT = 5;
     static final int ADJUST_ARM_INCREMENT = 1;
     static final double MAX_POWER = 1;
+    static final double MAX_VELOCITY = 2200;
     // Declare OpMode members.
     private Datalog dataLog;
     private ElapsedTime runTime;
@@ -82,7 +83,7 @@ public class RHSArmMotorHold extends LinearOpMode {
         armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        armFeedForward = new ElevatorFeedforward(8, 20, 0);
+        armFeedForward = new ElevatorFeedforward(8, 20, .8);
         armCountsPerInch = ((armCountsPerMotorRev * ARM_DRIVE_REDUCTION) / (ARM_WHEEL_DIAMETER_INCHES * 3.145));
 
         gamePadArm = new GamepadEx(gamepad2);
@@ -181,7 +182,7 @@ public class RHSArmMotorHold extends LinearOpMode {
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
         armMotor.setPositionPIDFCoefficients(8);
-        armMotor.setVelocity(2800);
+        armMotor.setVelocity(MAX_VELOCITY);
 
         while (armMotor.isBusy() && !isStopRequested()) {
             armVelocity = armMotor.getVelocity();
