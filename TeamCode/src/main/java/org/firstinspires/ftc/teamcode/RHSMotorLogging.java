@@ -57,6 +57,7 @@ public class RHSMotorLogging extends LinearOpMode {
     static final double DRIVE_GEAR_REDUCTION = 1;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 4;     // For figuring circumference
     static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
+    static final double MAX_VELOCITY = 2200;    // Use with feed forward.
     private final ElapsedTime runtime = new ElapsedTime();
     // These are set in init.
     double countsPerMotorRev = 2781;
@@ -78,7 +79,7 @@ public class RHSMotorLogging extends LinearOpMode {
         leftBackMotor = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
         leftBackMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBackMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        motorFeedForward = new SimpleMotorFeedforward(10, 5);
+        motorFeedForward = new SimpleMotorFeedforward(10, .8);
 
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
@@ -153,7 +154,7 @@ public class RHSMotorLogging extends LinearOpMode {
         leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftBackMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
         leftBackMotor.setPositionPIDFCoefficients(8);
-        leftBackMotor.setVelocity(2200);
+        leftBackMotor.setVelocity(MAX_VELOCITY);
 
         while (opModeIsActive() &&
                 !isStopRequested() &&
