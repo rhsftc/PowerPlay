@@ -64,6 +64,7 @@ public class RHSArmMotorHold extends LinearOpMode {
     private ArmPosition selectedPosition;
     private double armVelocity = 0;
     private double armCurrent = 0;
+    private double feedForwardCalculate = 0;
     private boolean isBusy = false;
     // These are set in init.
     private double armCountsPerMotorRev = 2781;
@@ -180,12 +181,13 @@ public class RHSArmMotorHold extends LinearOpMode {
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
         armMotor.setPositionPIDFCoefficients(8);
+        armMotor.setVelocity(2800);
 
         while (armMotor.isBusy() && !isStopRequested()) {
-            armMotor.setVelocity(2800);
-            armMotor.setPower(armFeedForward.calculate(2800));
-            armPosition = armMotor.getCurrentPosition();
             armVelocity = armMotor.getVelocity();
+            feedForwardCalculate = armFeedForward.calculate(armVelocity);
+            armMotor.setPower(feedForwardCalculate);
+            armPosition = armMotor.getCurrentPosition();
             armCurrent = armMotor.getCurrent(CurrentUnit.AMPS);
             isBusy = armMotor.isBusy();
             logData();
@@ -198,6 +200,7 @@ public class RHSArmMotorHold extends LinearOpMode {
         dataLog.position.set(armPosition);
         dataLog.velocity.set(armVelocity);
         dataLog.current.set(armCurrent);
+        dataLog.feedforward.set(feedForwardCalculate);
         dataLog.writeLine();
     }
 
@@ -223,6 +226,7 @@ public class RHSArmMotorHold extends LinearOpMode {
         public Datalogger.GenericField target = new Datalogger.GenericField("Target");
         public Datalogger.GenericField position = new Datalogger.GenericField("Position");
         public Datalogger.GenericField current = new Datalogger.GenericField("Current");
+        public Datalogger.GenericField feedforward = new Datalogger.GenericField("FeedForward");
 
         public Datalog(String name) {
             // Build the underlying datalog object
@@ -241,7 +245,8 @@ public class RHSArmMotorHold extends LinearOpMode {
                             target,
                             position,
                             velocity,
-                            current
+                            current,
+                            feedforward
                     )
                     .build();
         }

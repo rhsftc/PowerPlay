@@ -70,6 +70,7 @@ public class RHSMotorLogging extends LinearOpMode {
     private int leftBackPosition = 0;
     private double leftBackVelocity = 0;
     private double leftBackCurrent = 0;
+    private double feedForwardCalculate = 0;
 
     @Override
     public void runOpMode() {
@@ -150,6 +151,10 @@ public class RHSMotorLogging extends LinearOpMode {
 
         leftBackMotor.setTargetPosition(leftBackTarget);
         leftBackMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+        leftBackMotor.setPositionPIDFCoefficients(8);
+        leftBackMotor.setVelocity(2200);
+
         while (opModeIsActive() &&
                 !isStopRequested() &&
                 driveTimer.seconds() < driveTime) {
@@ -171,11 +176,11 @@ public class RHSMotorLogging extends LinearOpMode {
         while (leftBackMotor.isBusy() &&
                 !isStopRequested()) {
             driveSpeed = leftSpeed;
-            leftBackMotor.setVelocity(2200);
-            leftBackMotor.setPower(motorFeedForward.calculate(2200));
+            leftBackVelocity = leftBackMotor.getVelocity();
+            feedForwardCalculate = motorFeedForward.calculate(leftBackVelocity);
+            leftBackMotor.setPower(feedForwardCalculate);
 
             leftBackPosition = leftBackMotor.getCurrentPosition();
-            leftBackVelocity = leftBackMotor.getVelocity();
             leftBackCurrent = leftBackMotor.getCurrent(CurrentUnit.AMPS);
 
             // Log selected values
@@ -183,6 +188,7 @@ public class RHSMotorLogging extends LinearOpMode {
             datalog.position.set(leftBackPosition);
             datalog.velocity.set(leftBackVelocity);
             datalog.current.set(leftBackCurrent);
+            datalog.feedforward.set(feedForwardCalculate);
             datalog.writeLine();
             sendTelemetry();
         }
@@ -201,6 +207,7 @@ public class RHSMotorLogging extends LinearOpMode {
         public Datalogger.GenericField target = new Datalogger.GenericField("Target");
         public Datalogger.GenericField position = new Datalogger.GenericField("Position");
         public Datalogger.GenericField current = new Datalogger.GenericField("Current");
+        public Datalogger.GenericField feedforward = new Datalogger.GenericField("FeedForward");
 
         public Datalog(String name) {
             // Build the underlying datalog object
@@ -219,7 +226,8 @@ public class RHSMotorLogging extends LinearOpMode {
                             target,
                             position,
                             velocity,
-                            current
+                            current,
+                            feedforward
                     )
                     .build();
         }
