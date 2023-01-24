@@ -3,12 +3,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
-import com.arcrobotics.ftclib.drivebase.MecanumDrive;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
-import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.arcrobotics.ftclib.hardware.motors.MotorGroup;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
@@ -91,13 +89,12 @@ public class RHSBucketAuto extends LinearOpMode {
     private GamepadEx gamePadDrive;
     private String WEB_CAM_NAME = "webcam1";
     private SleeveDetection.ParkingPosition parkLocation;
-    private MotorEx backLeftDrive;
-    private MotorEx backRightDrive;
-    private MotorEx frontLeftDrive;
-    private MotorEx frontRightDrive;
+    private DcMotorEx backLeftDrive;
+    private DcMotorEx backRightDrive;
+    private DcMotorEx frontLeftDrive;
+    private DcMotorEx frontRightDrive;
     private MotorGroup leftMotors;
     private MotorGroup rightMotors;
-    private MecanumDrive driveRobot;
     private SimpleMotorFeedforward simpleFeedForward;
     private SimpleServo gripperServo;
 
@@ -179,33 +176,23 @@ public class RHSBucketAuto extends LinearOpMode {
 //        motorRPM = backLeftDrive.getMaxRPM();
         countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
-        simpleFeedForward = new SimpleMotorFeedforward(2, 10);
-        backLeftDrive = new MotorEx(hardwareMap, "leftbackdrive", countsPerMotorRev, motorRPM);
-        backRightDrive = new MotorEx(hardwareMap, "rightbackdrive", countsPerMotorRev, motorRPM);
-        frontLeftDrive = new MotorEx(hardwareMap, "leftfrontdrive", countsPerMotorRev, motorRPM);
-        frontRightDrive = new MotorEx(hardwareMap, "rightfrontdrive", countsPerMotorRev, motorRPM);
-        backLeftDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        backRightDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        frontLeftDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-        frontRightDrive.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
+        simpleFeedForward = new SimpleMotorFeedforward(10, .8);
+        backLeftDrive = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
+        backRightDrive = hardwareMap.get(DcMotorEx.class, "rightbackdrive");
+        frontLeftDrive = hardwareMap.get(DcMotorEx.class, "leftfrontdrive");
+        frontRightDrive = hardwareMap.get(DcMotorEx.class, "rightfrontdrive");
+        backLeftDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        backRightDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        frontLeftDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        frontRightDrive.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
-        backLeftDrive.setInverted(true);
-        frontLeftDrive.setInverted(true);
-        backRightDrive.setInverted(false);
-        frontRightDrive.setInverted(false);
+        backLeftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotorSimple.Direction.FORWARD);
 
-        backLeftDrive.setPositionCoefficient(.05);
-        frontLeftDrive.setPositionCoefficient(.05);
-        backRightDrive.setPositionCoefficient(.05);
-        frontRightDrive.setPositionCoefficient(.05);
-
-        backLeftDrive.setPositionTolerance(10);
-        frontLeftDrive.setPositionTolerance(10);
-        backRightDrive.setPositionTolerance(10);
-        frontRightDrive.setPositionTolerance(10);
-
-        leftMotors = new MotorGroup(backLeftDrive, frontLeftDrive);
-        rightMotors = new MotorGroup(backRightDrive, frontRightDrive);
+        leftMotors = new MotorGroup((Motor) backLeftDrive, (Motor) frontLeftDrive);
+        rightMotors = new MotorGroup((Motor) backRightDrive, (Motor) frontRightDrive);
 
         gripperServo = new SimpleServo(hardwareMap, "servo1", GRIPPER_MIN_ANGLE, GRIPPER_MAX_ANGLE);
         gripperServo.setInverted(true);
@@ -327,8 +314,6 @@ public class RHSBucketAuto extends LinearOpMode {
         getCurrentPositionsFromMotorGroups();
         backLeftTarget = backLeftPosition + moveCounts;
         backRightTarget = backRightPosition + moveCounts;
-        frontLeftTarget = backLeftTarget + moveCounts;
-        frontRightTarget = backRightTarget + moveCounts;
 
         // Set Target FIRST, then turn on RUN_TO_POSITION
         leftMotors.setTargetPosition(backLeftTarget);
@@ -361,7 +346,7 @@ public class RHSBucketAuto extends LinearOpMode {
         }
 
         // Stop all motion
-        stopAllMotors();
+//        stopAllMotors();
     }
 
     /**
@@ -505,10 +490,10 @@ public class RHSBucketAuto extends LinearOpMode {
     public void strafeRobot(double strafeSpeed, double distance, double heading, int strafeTime) {
         ElapsedTime strafeTimer = new ElapsedTime();
         strafeTimer.reset();
-        backLeftDrive.resetEncoder();
-        backRightDrive.resetEncoder();
-        frontLeftDrive.resetEncoder();
-        frontRightDrive.resetEncoder();
+        backLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        backRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         targetHeading = heading;
         int moveCounts = (int) (distance * countsPerInch);
@@ -530,28 +515,41 @@ public class RHSBucketAuto extends LinearOpMode {
         backLeftDrive.setTargetPosition(backLeftTarget);
         backRightDrive.setTargetPosition(backRightTarget);
         frontLeftDrive.setTargetPosition(frontLeftTarget);
-        frontRightDrive.setTargetDistance(frontRightTarget);
+        frontRightDrive.setTargetPosition(frontRightTarget);
 
-        backLeftDrive.setRunMode(MotorEx.RunMode.PositionControl);
-        backRightDrive.setRunMode(MotorEx.RunMode.PositionControl);
-        frontLeftDrive.setRunMode(Motor.RunMode.PositionControl);
-        frontRightDrive.setRunMode(Motor.RunMode.PositionControl);
+        backLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        backRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeftDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontRightDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        backLeftDrive.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+        backLeftDrive.setPositionPIDFCoefficients(8);
+        backLeftDrive.setVelocity(MAX_VELOCITY);
+        backRightDrive.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+        backRightDrive.setPositionPIDFCoefficients(8);
+        backRightDrive.setVelocity(MAX_VELOCITY);
+        frontLeftDrive.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+        frontLeftDrive.setPositionPIDFCoefficients(8);
+        frontLeftDrive.setVelocity(MAX_VELOCITY);
+        frontRightDrive.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
+        frontRightDrive.setPositionPIDFCoefficients(8);
+        frontRightDrive.setVelocity(MAX_VELOCITY);
 
         while (opModeIsActive() &&
                 !isStopRequested() &&
-                !(backLeftDrive.atTargetPosition() &&
-                        backRightDrive.atTargetPosition() &&
-                        frontLeftDrive.atTargetPosition() &&
-                        frontRightDrive.atTargetPosition()) &&
+                (backLeftDrive.isBusy() &&
+                        backRightDrive.isBusy() &&
+                        frontLeftDrive.isBusy() &&
+                        frontRightDrive.isBusy()) &&
                 (strafeTimer.seconds() < strafeTime)) {
-            backLeftDrive.set(strafeSpeed);
-            backRightDrive.set(strafeSpeed);
-            frontLeftDrive.set(strafeSpeed);
-            frontRightDrive.set(strafeSpeed);
+            backLeftDrive.setPower(strafeSpeed);
+            backRightDrive.setPower(strafeSpeed);
+            frontLeftDrive.setPower(strafeSpeed);
+            frontRightDrive.setPower(strafeSpeed);
             sendTelemetry();
         }
 
-        stopAllMotors();
+//        stopAllMotors();
     }
 
     public void moveArm(RHSArmMotorHold.ArmPosition position) {
@@ -642,10 +640,10 @@ public class RHSBucketAuto extends LinearOpMode {
     }
 
     public void stopAllMotors() {
-        backLeftDrive.stopMotor();
-        backRightDrive.stopMotor();
-        frontLeftDrive.stopMotor();
-        frontRightDrive.stopMotor();
+        backLeftDrive.setPower(0);
+        backRightDrive.setPower(0);
+        frontLeftDrive.setPower(0);
+        frontRightDrive.setPower(0);
     }
 
     /**
