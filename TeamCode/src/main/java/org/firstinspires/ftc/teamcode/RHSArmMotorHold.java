@@ -44,16 +44,19 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 @TeleOp(name = "Arm Hold", group = "test")
 //@Disabled
 public class RHSArmMotorHold extends LinearOpMode {
-    static final double ARM_DRIVE_REDUCTION = .5;
+    static final double ARM_DRIVE_REDUCTION = 2;
     static final double ARM_WHEEL_DIAMETER_INCHES = 2.5;
+    static final double ARM_MOTOR_RPM = 435;
+    static final double ARM_COUNTS_PER_MOTOR_REV = 384.5;   // eg: GoBILDA 435 RPM Yellow Jacket
+    static final double ARM_COUNTS_PER_WHEEL_REV = (ARM_COUNTS_PER_MOTOR_REV * ARM_DRIVE_REDUCTION);
+    static final double ARM_COUNTS_PER_INCH = ARM_COUNTS_PER_WHEEL_REV / (ARM_WHEEL_DIAMETER_INCHES * 3.1415);
     static final int LOW_JUNCTION = 14;
     static final int MEDIUM_JUNCTION = 24;
     static final int HIGH_JUNCTION = 34;
     static final int HOME_POSITION = 1;
     static final int CONE_HEIGHT = 5;
     static final int ADJUST_ARM_INCREMENT = 1;
-    static final double MAX_POWER = 1;
-    static final double MAX_VELOCITY = 2200;
+    private double TPS = ((ARM_MOTOR_RPM * .75) / 60) * ARM_COUNTS_PER_WHEEL_REV;
     // Declare OpMode members.
     private Datalog dataLog;
     private ElapsedTime runTime;
@@ -67,9 +70,6 @@ public class RHSArmMotorHold extends LinearOpMode {
     private double armCurrent = 0;
     private double feedForwardCalculate = 0;
     private boolean isBusy = false;
-    // These are set in init.
-    private double armCountsPerMotorRev = 2781;
-    private double armCountsPerInch = 0;
 
     @Override
     public void runOpMode() {
@@ -83,8 +83,7 @@ public class RHSArmMotorHold extends LinearOpMode {
         armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        armFeedForward = new ElevatorFeedforward(8, 20, .8);
-        armCountsPerInch = ((armCountsPerMotorRev * ARM_DRIVE_REDUCTION) / (ARM_WHEEL_DIAMETER_INCHES * 3.145));
+        armFeedForward = new ElevatorFeedforward(12, 20, .9);
 
         gamePadArm = new GamepadEx(gamepad2);
 
@@ -158,35 +157,35 @@ public class RHSArmMotorHold extends LinearOpMode {
         armPosition = armMotor.getCurrentPosition();
         switch (position) {
             case HOME:
-                armTarget = HOME_POSITION * (int) armCountsPerInch;
+                armTarget = HOME_POSITION * (int) ARM_COUNTS_PER_INCH;
                 break;
             case LOW:
-                armTarget = (LOW_JUNCTION * (int) armCountsPerInch);
+                armTarget = (LOW_JUNCTION * (int) ARM_COUNTS_PER_INCH);
                 break;
             case MEDIUM:
-                armTarget = (MEDIUM_JUNCTION * (int) armCountsPerInch);
+                armTarget = (MEDIUM_JUNCTION * (int) ARM_COUNTS_PER_INCH);
                 break;
             case HIGH:
-                armTarget = (HIGH_JUNCTION * (int) armCountsPerInch);
+                armTarget = (HIGH_JUNCTION * (int) ARM_COUNTS_PER_INCH);
                 break;
             case ADJUST_UP:
-                armTarget = armPosition + (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
+                armTarget = armPosition + (ADJUST_ARM_INCREMENT * (int) ARM_COUNTS_PER_INCH);
                 break;
             case ADJUST_DOWN:
-                armTarget = armPosition - (ADJUST_ARM_INCREMENT * (int) armCountsPerInch);
+                armTarget = armPosition - (ADJUST_ARM_INCREMENT * (int) ARM_COUNTS_PER_INCH);
                 break;
             default:
                 return;
         }
 
         // Prevent arm moving below HOME_POSITION
-        armTarget = Math.max(armTarget, HOME_POSITION * (int) armCountsPerInch);
+        armTarget = Math.max(armTarget, HOME_POSITION * (int) ARM_COUNTS_PER_INCH);
         armMotor.setTargetPosition(armTarget);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
         armMotor.setPositionPIDFCoefficients(10);
-        armMotor.setTargetPositionTolerance(10);
-        armMotor.setVelocity(MAX_VELOCITY);
+        armMotor.setTargetPositionTolerance(5);
+        armMotor.setVelocity(TPS);
 
         while (armMotor.isBusy() && !isStopRequested()) {
             armVelocity = armMotor.getVelocity();
