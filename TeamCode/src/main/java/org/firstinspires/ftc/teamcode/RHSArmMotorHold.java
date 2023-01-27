@@ -98,18 +98,21 @@ public class RHSArmMotorHold extends LinearOpMode {
         while (opModeIsActive() && !isStopRequested()) {
             gamePadArm.readButtons();
             ProcessArm();
-            sendTelemetry();
+            sendTelemetry("Main Loop");
         }
     }
 
-    public void sendTelemetry() {
+    public void sendTelemetry(String location) {
         telemetry.addData("Run time", runTime);
+        telemetry.addData("Called from", location);
         telemetry.addData("Selected Position", selectedPosition);
         telemetry.addData("Target Position", "%d", armTarget);
         telemetry.addData("Current Position", armPosition);
         telemetry.addData("Velocity", armVelocity);
         telemetry.addData("Current", armCurrent);
         telemetry.addData("Busy", isBusy);
+        telemetry.addData("Feed Forward", feedForwardCalculate);
+        telemetry.addData("Pos Tolerance", armMotor.getTargetPositionTolerance());
         telemetry.update();
     }
 
@@ -181,7 +184,8 @@ public class RHSArmMotorHold extends LinearOpMode {
         armMotor.setTargetPosition(armTarget);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
-        armMotor.setPositionPIDFCoefficients(8);
+        armMotor.setPositionPIDFCoefficients(10);
+        armMotor.setTargetPositionTolerance(10);
         armMotor.setVelocity(MAX_VELOCITY);
 
         while (armMotor.isBusy() && !isStopRequested()) {
@@ -192,7 +196,7 @@ public class RHSArmMotorHold extends LinearOpMode {
             armCurrent = armMotor.getCurrent(CurrentUnit.AMPS);
             isBusy = armMotor.isBusy();
             logData();
-            sendTelemetry();
+            sendTelemetry("Move Arm");
         }
     }
 
