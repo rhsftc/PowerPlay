@@ -35,6 +35,8 @@ import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 /**
  * Demonstrates empty OpMode
  */
@@ -42,20 +44,42 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 //@Disabled
 public class RHSServoTune extends OpMode {
     SimpleServo servo;
+    boolean isInverted = false;
     private final double MIN_RANGE = 0;
-    private final double MAX_RANGE=180;
-    private double minAngle = 0;
-    private double maxAngle = 180;
-    private double range = 0;
+    private final double MAX_RANGE = 180;
+    private double turnToMinAngle = 45;
+    private double turnToMaxAngle = 90;
     private double turnToAngle = 0;
     private GamepadEx gamePadDrive;
+    private Telemetry.Item teleInverted;
+    private Telemetry.Item teleTurnToMinAngle;
+    private Telemetry.Item teleTurnToMaxAngle;
+    private Telemetry.Item teleServoAngle;
+    private Telemetry.Item teleServoPosition;
+    private Telemetry.Item teleServoRange;
 
     @Override
     public void init() {
-        telemetry.addData("Status", "Initialized");
         gamePadDrive = new GamepadEx(gamepad1);
-        servo = new SimpleServo(hardwareMap, "servo1", minAngle, maxAngle);
-        servo.setRange(minAngle, maxAngle);
+        servo = new SimpleServo(hardwareMap, "servo1", MIN_RANGE, MAX_RANGE);
+        servo.setInverted(isInverted);
+
+        telemetry.setAutoClear(false);
+        telemetry.addLine("Back: Toggle Inverted");
+        telemetry.addLine("DPAD Left: Decrease min angle");
+        telemetry.addLine("DPAD Right: Increase min angle");
+        telemetry.addLine("DPAD Up: Increase max angle");
+        telemetry.addLine("DPAD Down: Decrease max angle");
+        telemetry.addLine("A: Turn to min angle");
+        telemetry.addLine("B: Turn to max angle");
+
+        teleInverted = telemetry.addData("Inverted", isInverted);
+        teleTurnToMinAngle = telemetry.addData("Min Angle", turnToMinAngle);
+        teleTurnToMaxAngle = telemetry.addData("Max Angle", turnToMaxAngle);
+        teleServoAngle = telemetry.addData("Servo angle", servo.getAngle());
+        teleServoPosition = telemetry.addData("Servo position", servo.getPosition());
+        teleServoRange = telemetry.addData("Servo range", servo.getAngleRange());
+//        telemetry.update();
     }
 
     @Override
@@ -76,64 +100,43 @@ public class RHSServoTune extends OpMode {
     @Override
     public void loop() {
         gamePadDrive.readButtons();
+        if (gamePadDrive.wasJustPressed(GamepadKeys.Button.BACK)) {
+            isInverted = !isInverted;
+        }
+
         if (gamePadDrive.wasJustReleased(GamepadKeys.Button.DPAD_LEFT)) {
-            if (minAngle > MIN_RANGE) {
-                minAngle -= 1;
-                updateRange();
+            if (turnToMinAngle > MIN_RANGE) {
+                turnToMinAngle -= 1;
             }
         }
 
         if (gamePadDrive.wasJustReleased(GamepadKeys.Button.DPAD_RIGHT)) {
-            if (minAngle < MAX_RANGE) {
-                minAngle += 1;
-                updateRange();
+            if (turnToMinAngle < MAX_RANGE) {
+                turnToMinAngle += 1;
             }
         }
 
         if (gamePadDrive.wasJustReleased(GamepadKeys.Button.DPAD_UP)) {
-            if (maxAngle < MAX_RANGE) {
-                maxAngle += 1;
-                updateRange();
+            if (turnToMaxAngle < MAX_RANGE) {
+                turnToMaxAngle += 1;
             }
         }
 
         if (gamePadDrive.wasJustReleased(GamepadKeys.Button.DPAD_DOWN)) {
-            if (maxAngle > MIN_RANGE) {
-                maxAngle -= 1;
-                updateRange();
-            }
-        }
-
-        if (gamePadDrive.wasJustReleased(GamepadKeys.Button.X)) {
-            if (turnToAngle > MIN_RANGE) {
-                turnToAngle -= 1;
-                servo.turnToAngle(turnToAngle);
-            }
-        }
-
-        if (gamePadDrive.wasJustReleased(GamepadKeys.Button.Y)) {
-            if (turnToAngle < MAX_RANGE) {
-                turnToAngle += 1;
-                servo.turnToAngle(turnToAngle);
+            if (turnToMaxAngle > MIN_RANGE) {
+                turnToMaxAngle -= 1;
             }
         }
 
         if (gamePadDrive.wasJustReleased(GamepadKeys.Button.A)) {
-            servo.turnToAngle(minAngle);
+            servo.turnToAngle(turnToMinAngle);
         }
 
         if (gamePadDrive.wasJustReleased(GamepadKeys.Button.B)) {
-            servo.turnToAngle(maxAngle);
+            servo.turnToAngle(turnToMaxAngle);
         }
 
-        telemetry.addData("Min Angle", minAngle);
-        telemetry.addData("Max Angle", maxAngle);
-        telemetry.addData("Range", range);
-        telemetry.addData("Turn to", turnToAngle);
-        telemetry.addData("Servo angle", servo.getAngle());
-        telemetry.addData("Servo position", servo.getPosition());
-        telemetry.addData("Servo range", servo.getAngleRange());
-        telemetry.update();
+        sendTelemetry();
     }
 
     @Override
@@ -141,8 +144,12 @@ public class RHSServoTune extends OpMode {
 
     }
 
-    public void updateRange() {
-        range = maxAngle - minAngle;
-        servo.setRange(minAngle, maxAngle);
+    public void sendTelemetry() {
+        teleInverted.setValue(isInverted);
+        teleTurnToMinAngle.setValue(turnToMinAngle);
+        teleTurnToMaxAngle.setValue(turnToMaxAngle);
+        teleServoAngle.setValue(servo.getAngle());
+        teleServoPosition.setValue(servo.getPosition());
+        teleServoRange.setValue(servo.getAngleRange());
     }
 }
