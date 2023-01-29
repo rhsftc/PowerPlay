@@ -49,7 +49,6 @@ public class RHSServoTune extends OpMode {
     private final double MAX_RANGE = 180;
     private double turnToMinAngle = 45;
     private double turnToMaxAngle = 90;
-    private double turnToAngle = 0;
     private GamepadEx gamePadDrive;
     private Telemetry.Item teleInverted;
     private Telemetry.Item teleTurnToMinAngle;
@@ -79,7 +78,6 @@ public class RHSServoTune extends OpMode {
         teleServoAngle = telemetry.addData("Servo angle", servo.getAngle());
         teleServoPosition = telemetry.addData("Servo position", servo.getPosition());
         teleServoRange = telemetry.addData("Servo range", servo.getAngleRange());
-//        telemetry.update();
     }
 
     @Override
