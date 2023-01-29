@@ -183,7 +183,7 @@ public class RHSArmMotorHold extends LinearOpMode {
         armMotor.setTargetPosition(armTarget);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
-        armMotor.setPositionPIDFCoefficients(10);
+        armMotor.setPositionPIDFCoefficients(5);
         armMotor.setTargetPositionTolerance(5);
         armMotor.setVelocity(TPS);
 
