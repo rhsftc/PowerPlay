@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name = "Max Velocity", group = "test")
+@TeleOp(name = "Max Velocity", group = "motor")
 //@Disabled
 public class RHSMaxVelocity extends LinearOpMode {
     DcMotorEx motor;
@@ -38,10 +38,10 @@ public class RHSMaxVelocity extends LinearOpMode {
                 telemetry.update();
             }
 
+            motor.setPower(0);
             pidfF = 32767 / maxVelocity;
             pidfP = pidfF * .1;
             pidfI = pidfP * .1;
-
 
             sleep(2000);
             runVelocoity = maxVelocity * .75;
@@ -59,6 +59,8 @@ public class RHSMaxVelocity extends LinearOpMode {
                 telemetry.update();
             }
 
+            telemetry.addData("PIDF", "P=%g I=%g D=%g F=%g", pidfP, pidfI, pidfD, pidfF);
+            telemetry.update();
             sleep(5000);
         }
     }

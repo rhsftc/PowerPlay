@@ -7,7 +7,7 @@ import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name = "Mecanum Sample", group = "concept")
+@TeleOp(name = "Mecanum Sample", group = "motor")
 public class RHSMecanumSample extends LinearOpMode {
 
     // This variable determines whether the following program

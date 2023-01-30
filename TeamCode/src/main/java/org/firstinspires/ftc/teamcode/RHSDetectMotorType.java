@@ -47,7 +47,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
  * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
-@TeleOp(name = "Detect Motor Type", group = "test")
+@TeleOp(name = "Detect Motor Type", group = "motor")
 //@Disabled
 public class RHSDetectMotorType extends LinearOpMode {
 
@@ -63,15 +63,13 @@ public class RHSDetectMotorType extends LinearOpMode {
     double achievableCountsPerRev;
     double countsPerRev;
     double encoderRate;
+    double velocity;
     MotorConfigurationType type;
-
     double power = 0;
     boolean rampUp = true;
 
-
     @Override
     public void runOpMode() {
-
         // Connect to motor (Assume standard left wheel)
         // Change the text in quotes to match any motor name on your robot.
         motor = new MotorEx(hardwareMap, "leftbackdrive", Motor.GoBILDA.RPM_435);
@@ -112,8 +110,14 @@ public class RHSDetectMotorType extends LinearOpMode {
                 }
             }
 
+            countsPerRev = motor.getCPR();
+            encoderRate = motor.getRate();
+            velocity = motor.getVelocity();
+
             // Display the current value
             telemetry.addData("Motor Power", "%5.2f", power);
+            telemetry.addData("Tick Rate", countsPerRev);
+            telemetry.addData("Velocity", velocity);
             telemetry.addData(">", "Press Stop to end test.");
             telemetry.update();
 

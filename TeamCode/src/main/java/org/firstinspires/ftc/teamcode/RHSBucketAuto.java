@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.hardware.SimpleServo;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -17,6 +18,7 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import java.util.List;
 
 @Autonomous(name = "Bucket Auto", group = "FtcLib")
+@Disabled
 public class RHSBucketAuto extends LinearOpMode {
     int blpos;
     int brpos;

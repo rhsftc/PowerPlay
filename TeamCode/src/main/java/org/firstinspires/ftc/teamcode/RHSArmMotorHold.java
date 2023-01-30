@@ -41,7 +41,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
-@TeleOp(name = "Arm Hold", group = "test")
+@TeleOp(name = "Arm Hold", group = "motor")
 //@Disabled
 public class RHSArmMotorHold extends LinearOpMode {
     static final double ARM_DRIVE_REDUCTION = 2;

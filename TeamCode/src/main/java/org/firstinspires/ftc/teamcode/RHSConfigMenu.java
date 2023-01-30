@@ -30,6 +30,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -48,7 +49,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  */
 
 @Autonomous(name = "Options Menu", group = "autonomous", preselectTeleOp = "FTCLib Servo")
-//@Disabled
+@Disabled
 public class RHSConfigMenu extends OpMode {
     AutonomousConfiguration autonomousConfiguration = new AutonomousConfiguration();
     // Declare OpMode members.

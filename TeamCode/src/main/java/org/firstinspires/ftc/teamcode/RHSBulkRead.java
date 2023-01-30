@@ -33,6 +33,7 @@ package org.firstinspires.ftc.teamcode;
 import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.arcrobotics.ftclib.hardware.motors.MotorEx;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -82,7 +83,7 @@ import java.util.List;
 
  */
 @TeleOp(name = "Motor Bulk Reads", group = "concept")
-//@Disabled
+@Disabled
 public class RHSBulkRead extends LinearOpMode {
 
     final int TEST_CYCLES = 500;   // Number of control cycles to run to determine cycle times.
