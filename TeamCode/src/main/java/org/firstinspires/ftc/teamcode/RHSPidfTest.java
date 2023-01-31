@@ -48,7 +48,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 import java.util.List;
 
-
 @Config
 @TeleOp(name = "PIDF Test", group = "motor")
 //@Disabled
@@ -87,7 +86,7 @@ public class RHSPidfTest extends LinearOpMode {
     private SimpleMotorFeedforward motorFeedForward;
     GamepadEx gamePadArm;
     private int position = 0;
-    private RHSArmMotorHold.ArmPosition selectedPosition;
+    private ArmPosition selectedPosition;
     private boolean isBusy = false;
     private double feedForwardCalculate = 0;
     private double driveSpeed = 0;
@@ -150,49 +149,48 @@ public class RHSPidfTest extends LinearOpMode {
         waitForStart();
         runtime.reset();
         while (opModeIsActive() && !isStopRequested()) {
-            if (!isArmTest) {
+            if (isArmTest) {
+                gamePadArm.readButtons();
+                ProcessArm();
+            } else {
                 if (!isMotorFinished) {
                     motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     driveStraight(DRIVE_SPEED, 24, 10);
                     isMotorFinished = true;
                 }
-            } else {
-                gamePadArm.readButtons();
-                ProcessArm();
-                telemetry.update();
             }
         }
     }
 
     public void ProcessArm() {
-        RHSArmMotorHold.ArmPosition position = null;
+        ArmPosition position = null;
         // Adjust position
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            position = RHSArmMotorHold.ArmPosition.ADJUST_DOWN;
+            position = ArmPosition.ADJUST_DOWN;
         }
 
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            position = RHSArmMotorHold.ArmPosition.ADJUST_UP;
+            position = ArmPosition.ADJUST_UP;
         }
 
         // Low junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.A)) {
-            position = RHSArmMotorHold.ArmPosition.LOW;
+            position = ArmPosition.LOW;
         }
 
         // medium junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.B)) {
-            position = RHSArmMotorHold.ArmPosition.MEDIUM;
+            position = ArmPosition.MEDIUM;
         }
 
         // high junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.Y)) {
-            position = RHSArmMotorHold.ArmPosition.HIGH;
+            position = ArmPosition.HIGH;
         }
 
         // ground junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.X)) {
-            position = RHSArmMotorHold.ArmPosition.HOME;
+            position = ArmPosition.HOME;
         }
 
         if (position != null) {
@@ -200,8 +198,7 @@ public class RHSPidfTest extends LinearOpMode {
         }
     }
 
-
-    public void moveArm(RHSArmMotorHold.ArmPosition position) {
+    public void moveArm(ArmPosition position) {
         selectedPosition = position;
         this.position = armMotor.getCurrentPosition();
         switch (position) {
@@ -234,8 +231,8 @@ public class RHSPidfTest extends LinearOpMode {
         armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
         armMotor.setPositionPIDFCoefficients(5);
         armMotor.setTargetPositionTolerance(5);
-        armMotor.setVelocity(TPS);
-//        armMotor.setVelocity(MAX_VELOCITY);
+//        armMotor.setVelocity(TPS);
+        armMotor.setVelocity(MAX_VELOCITY);
 
         while (armMotor.isBusy() && !isStopRequested()) {
             velocity = armMotor.getVelocity();
