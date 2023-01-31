@@ -91,7 +91,6 @@ public class RHSPidfTest extends LinearOpMode {
     private double feedForwardCalculate = 0;
     private double driveSpeed = 0;
     private int target = 0;
-    private int currentPosition = 0;
     private double velocity = 0;
     private double current = 0;
     private boolean isArmTest = false;
@@ -265,14 +264,10 @@ public class RHSPidfTest extends LinearOpMode {
         ADJUST_DOWN
     }
 
-
-    /**
-     * Display the various control parameters while driving
-     */
     public void sendTelemetry() {
         telemetry.addData("Status", "Run Time: " + runtime.seconds());
         telemetry.addData("Target Position", target);
-        telemetry.addData("Position", "%d", currentPosition);
+        telemetry.addData("Position", "%d", position);
         telemetry.addData("Target Speed", "%6.2f", driveSpeed);
         telemetry.addData("Velocity", "%6.2f", velocity);
         telemetry.addData("Current", "%6.2f\n", current);
@@ -298,13 +293,14 @@ public class RHSPidfTest extends LinearOpMode {
 
         // Determine new target position, and pass to motor controller
         int moveCounts = (int) (distance * countsPerInch);
-        currentPosition = motor.getCurrentPosition();
-        target = currentPosition + moveCounts;
+        position = motor.getCurrentPosition();
+        target = position + moveCounts;
 
         motor.setTargetPosition(target);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
-        motor.setPositionPIDFCoefficients(8);
+        motor.setVelocityPIDFCoefficients(1.09, 0.109, 0, 10.9);
+        motor.setPositionPIDFCoefficients(10);
+        motor.setTargetPositionTolerance(20);
         motor.setVelocity(MAX_VELOCITY);
 
         while (opModeIsActive() &&
@@ -333,7 +329,7 @@ public class RHSPidfTest extends LinearOpMode {
 //            motor.setVelocity(MAX_VELOCITY);
             motor.setPower(feedForwardCalculate);
 
-            currentPosition = motor.getCurrentPosition();
+            position = motor.getCurrentPosition();
             current = motor.getCurrent(CurrentUnit.AMPS);
 
             // Log selected values
