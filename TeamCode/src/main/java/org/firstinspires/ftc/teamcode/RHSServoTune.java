@@ -15,8 +15,8 @@ public class RHSServoTune extends OpMode {
     boolean isInverted = false;
     private final double MIN_RANGE = 0;
     private final double MAX_RANGE = 180;
-    private double turnToMinAngle = 45;
-    private double turnToMaxAngle = 90;
+    private double turnToMinAngle = 25;
+    private double turnToMaxAngle = 73;
     private GamepadEx gamePadDrive;
     private Telemetry.Item teleInverted;
     private Telemetry.Item teleTurnToMinAngle;
