@@ -29,9 +29,7 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -59,14 +57,21 @@ public class RHSPidfTest extends LinearOpMode {
     // This is gearing DOWN for less speed and more torque.
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
     static final double DRIVE_GEAR_REDUCTION = 1;     // No External Gearing.
-    static final double WHEEL_DIAMETER_INCHES = 4;     // For figuring circumference
+    static final double WHEEL_DIAMETER_INCHES = 3.778;     // For figuring circumference
     static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
-    static final double MAX_VELOCITY = 2200;    // Use with feed forward.
+    static final double MOTOR_RPM = 435;
+    static double COUNTS_PER_MOTOR_REV = 383.6;
+    static double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
+
+    static double MOTOR_TPS = ((MOTOR_RPM * .75) / 60) * COUNTS_PER_MOTOR_REV;
+    static final double HEADING_THRESHOLD = .8;
+    static final double MOTOR_POSITION_COEFFICIENT = 8;
+    static final double MAX_VELOCITY = 2200;    // Use with arm feed forward.
     // Arm related
     static final double ARM_DRIVE_REDUCTION = 2;
     static final double ARM_WHEEL_DIAMETER_INCHES = 2.5;
     static final double ARM_MOTOR_RPM = 435;
-    static final double ARM_COUNTS_PER_MOTOR_REV = 384.5;   // eg: GoBILDA 435 RPM Yellow Jacket
+    static final double ARM_COUNTS_PER_MOTOR_REV = 383.6;   // eg: GoBILDA 435 RPM Yellow Jacket
     static final double ARM_COUNTS_PER_WHEEL_REV = (ARM_COUNTS_PER_MOTOR_REV * ARM_DRIVE_REDUCTION);
     static final double ARM_COUNTS_PER_INCH = ARM_COUNTS_PER_WHEEL_REV / (ARM_WHEEL_DIAMETER_INCHES * 3.1415);
     public static int LOW_JUNCTION = 14;
@@ -80,7 +85,6 @@ public class RHSPidfTest extends LinearOpMode {
     private final ElapsedTime runtime = new ElapsedTime();
     // These are set in init.
     double countsPerMotorRev = 2900;
-    double countsPerInch = 0;
     Datalog dataLog;
     private DcMotorEx motor = null;
     private SimpleMotorFeedforward motorFeedForward;
@@ -99,7 +103,7 @@ public class RHSPidfTest extends LinearOpMode {
     public void runOpMode() {
         boolean isMotorFinished = false;
         gamePadArm = new GamepadEx(gamepad2);
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+//        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         while (!isStarted() &&
                 !gamePadArm.wasJustPressed(GamepadKeys.Button.START) &&
                 !isStopRequested()) {
@@ -130,7 +134,6 @@ public class RHSPidfTest extends LinearOpMode {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.setDirection(DcMotorSimple.Direction.FORWARD);
             motorFeedForward = new SimpleMotorFeedforward(10, .8);
-            countsPerInch = (countsPerMotorRev * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
             dataLog = new Datalog("pidfvelocityposition");
         }
 
@@ -154,7 +157,7 @@ public class RHSPidfTest extends LinearOpMode {
             } else {
                 if (!isMotorFinished) {
                     motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    driveStraight(DRIVE_SPEED, 24, 10);
+                    driveStraight(DRIVE_SPEED, 96, 3);
                     isMotorFinished = true;
                 }
             }
@@ -291,17 +294,18 @@ public class RHSPidfTest extends LinearOpMode {
         ElapsedTime driveTimer = new ElapsedTime();
         driveTimer.reset();
 
+        motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // Determine new target position, and pass to motor controller
-        int moveCounts = (int) (distance * countsPerInch);
+        int moveCounts = (int) (distance * COUNTS_PER_INCH);
         position = motor.getCurrentPosition();
         target = position + moveCounts;
 
         motor.setTargetPosition(target);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor.setVelocityPIDFCoefficients(1.09, 0.109, 0, 10.9);
-        motor.setPositionPIDFCoefficients(10);
-        motor.setTargetPositionTolerance(20);
-        motor.setVelocity(MAX_VELOCITY);
+        motor.setVelocityPIDFCoefficients(1.106, 0.1106, 0, 11.06);
+        motor.setPositionPIDFCoefficients(8);
+        motor.setTargetPositionTolerance(5);
+        motor.setVelocity(MOTOR_TPS);
 
         while (opModeIsActive() &&
                 !isStopRequested() &&
@@ -321,21 +325,32 @@ public class RHSPidfTest extends LinearOpMode {
             leftSpeed /= max;
         }
 
-        while (motor.isBusy() &&
-                !isStopRequested()) {
+        logData();
+        sendTelemetry();
+        while (motor.isBusy()) {
             driveSpeed = leftSpeed;
             velocity = motor.getVelocity();
-            feedForwardCalculate = motorFeedForward.calculate(velocity);
-//            motor.setVelocity(MAX_VELOCITY);
-            motor.setPower(feedForwardCalculate);
+//            feedForwardCalculate = motorFeedForward.calculate(velocity);
+//            motor.setPower(feedForwardCalculate);
+//            motor.setVelocity(MOTOR_TPS);
 
             position = motor.getCurrentPosition();
             current = motor.getCurrent(CurrentUnit.AMPS);
-
-            // Log selected values
             logData();
             sendTelemetry();
         }
+    }
+
+    /**
+     * Convert power to velocity.
+     * double TPS = (power/60) * COUNTS_PER_MOTOR_REV;
+     * ! For drive motors, not arm.
+     *
+     * @param power A motor power within -1 to 1.
+     * @return Ticks per second for use in velocity.
+     */
+    private double powerToTPS(double power) {
+        return ((power * MOTOR_RPM) / 60) * COUNTS_PER_MOTOR_REV;
     }
 
     /*
