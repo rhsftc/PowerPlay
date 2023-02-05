@@ -65,7 +65,8 @@ public class RHSPidfTest extends LinearOpMode {
 
     static double MOTOR_TPS = ((MOTOR_RPM * .75) / 60) * COUNTS_PER_MOTOR_REV;
     static final double HEADING_THRESHOLD = .8;
-    static final double MOTOR_POSITION_COEFFICIENT = 8;
+    static final double MOTOR_POSITION_COEFFICIENT = 20;
+    static final int MOTOR_POSITION_TARGET_TOLERANCE = 20;
     static final double MAX_VELOCITY = 2200;    // Use with arm feed forward.
     // Arm related
     static final double ARM_DRIVE_REDUCTION = 2;
@@ -134,7 +135,7 @@ public class RHSPidfTest extends LinearOpMode {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.setDirection(DcMotorSimple.Direction.FORWARD);
             motorFeedForward = new SimpleMotorFeedforward(10, .8);
-            dataLog = new Datalog("pidfvelocityposition");
+            dataLog = new Datalog("pidfsdk");
         }
 
         // Important Step 1: Instantiate motor first and with MotoeEc or DCMotorEx.
@@ -156,7 +157,6 @@ public class RHSPidfTest extends LinearOpMode {
                 ProcessArm();
             } else {
                 if (!isMotorFinished) {
-                    motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                     driveStraight(DRIVE_SPEED, 96, 3);
                     isMotorFinished = true;
                 }
@@ -302,13 +302,14 @@ public class RHSPidfTest extends LinearOpMode {
 
         motor.setTargetPosition(target);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor.setVelocityPIDFCoefficients(1.106, 0.1106, 0, 11.06);
-        motor.setPositionPIDFCoefficients(8);
-        motor.setTargetPositionTolerance(5);
-        motor.setVelocity(MOTOR_TPS);
+//        motor.setVelocityPIDFCoefficients(1.106, 0.1106, 0, 11.06);
+//        motor.setPositionPIDFCoefficients(MOTOR_POSITION_COEFFICIENT);
+//        motor.setTargetPositionTolerance(MOTOR_POSITION_TARGET_TOLERANCE);
+        motor.setVelocity(powerToTPS(maxDriveSpeed));
 
         while (opModeIsActive() &&
                 !isStopRequested() &&
+                motor.isBusy() &&
                 driveTimer.seconds() < driveTime) {
             moveRobot(maxDriveSpeed);
         }
@@ -325,20 +326,16 @@ public class RHSPidfTest extends LinearOpMode {
             leftSpeed /= max;
         }
 
+        driveSpeed = leftSpeed;
+//        velocity = motor.getVelocity();
+//        feedForwardCalculate = motorFeedForward.calculate(velocity);
+//        motor.setPower(feedForwardCalculate);
+        motor.setVelocity(driveSpeed);
+
+        position = motor.getCurrentPosition();
+        current = motor.getCurrent(CurrentUnit.AMPS);
         logData();
         sendTelemetry();
-        while (motor.isBusy()) {
-            driveSpeed = leftSpeed;
-            velocity = motor.getVelocity();
-//            feedForwardCalculate = motorFeedForward.calculate(velocity);
-//            motor.setPower(feedForwardCalculate);
-//            motor.setVelocity(MOTOR_TPS);
-
-            position = motor.getCurrentPosition();
-            current = motor.getCurrent(CurrentUnit.AMPS);
-            logData();
-            sendTelemetry();
-        }
     }
 
     /**
