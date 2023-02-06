@@ -58,21 +58,21 @@ public class RHSPidfTest extends LinearOpMode {
     // For gearing UP, use a gear ratio less than 1.0. Note this will affect the direction of wheel rotation.
     static final double DRIVE_GEAR_REDUCTION = 1;     // No External Gearing.
     static final double WHEEL_DIAMETER_INCHES = 3.778;     // For figuring circumference
-    static final double DRIVE_SPEED = 0.4;     // Max driving speed for better distance accuracy.
+    static final double DRIVE_SPEED = .6;     // Max driving speed for better distance accuracy.
     static final double MOTOR_RPM = 435;
     static double COUNTS_PER_MOTOR_REV = 383.6;
     static double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * 3.1415);
 
     static double MOTOR_TPS = ((MOTOR_RPM * .75) / 60) * COUNTS_PER_MOTOR_REV;
     static final double HEADING_THRESHOLD = .8;
-    static final double MOTOR_POSITION_COEFFICIENT = 20;
+    static final double MOTOR_POSITION_COEFFICIENT = 5;
     static final int MOTOR_POSITION_TARGET_TOLERANCE = 20;
     static final double MAX_VELOCITY = 2200;    // Use with arm feed forward.
     // Arm related
     static final double ARM_DRIVE_REDUCTION = 2;
     static final double ARM_WHEEL_DIAMETER_INCHES = 2.5;
     static final double ARM_MOTOR_RPM = 435;
-    static final double ARM_COUNTS_PER_MOTOR_REV = 383.6;   // eg: GoBILDA 435 RPM Yellow Jacket
+    static final double ARM_COUNTS_PER_MOTOR_REV = 383.6;   // eg: GoBilda 435 RPM Yellow Jacket
     static final double ARM_COUNTS_PER_WHEEL_REV = (ARM_COUNTS_PER_MOTOR_REV * ARM_DRIVE_REDUCTION);
     static final double ARM_COUNTS_PER_INCH = ARM_COUNTS_PER_WHEEL_REV / (ARM_WHEEL_DIAMETER_INCHES * 3.1415);
     public static int LOW_JUNCTION = 14;
@@ -135,10 +135,10 @@ public class RHSPidfTest extends LinearOpMode {
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.setDirection(DcMotorSimple.Direction.FORWARD);
             motorFeedForward = new SimpleMotorFeedforward(10, .8);
-            dataLog = new Datalog("pidfsdk");
+            dataLog = new Datalog("pidfpositionvelocity");
         }
 
-        // Important Step 1: Instantiate motor first and with MotoeEc or DCMotorEx.
+        // Important Step 1: Instantiate motor first and with MotoeEx or DCMotorEx.
         // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
         List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
         // Important Step 3: Set all Expansion hubs to use the AUTO Bulk Caching mode
@@ -152,15 +152,17 @@ public class RHSPidfTest extends LinearOpMode {
         waitForStart();
         runtime.reset();
         while (opModeIsActive() && !isStopRequested()) {
-            if (isArmTest) {
-                gamePadArm.readButtons();
-                ProcessArm();
-            } else {
-                if (!isMotorFinished) {
-                    driveStraight(DRIVE_SPEED, 96, 3);
-                    isMotorFinished = true;
-                }
+//            if (isArmTest) {
+//                gamePadArm.readButtons();
+//                ProcessArm();
+//            } else {
+            if (!isMotorFinished) {
+                driveStraight(DRIVE_SPEED, 36, 3);
+                sleep(750);
+                isMotorFinished = true;
             }
+
+//            }
         }
     }
 
@@ -302,16 +304,19 @@ public class RHSPidfTest extends LinearOpMode {
 
         motor.setTargetPosition(target);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//        motor.setVelocityPIDFCoefficients(1.106, 0.1106, 0, 11.06);
-//        motor.setPositionPIDFCoefficients(MOTOR_POSITION_COEFFICIENT);
-//        motor.setTargetPositionTolerance(MOTOR_POSITION_TARGET_TOLERANCE);
-        motor.setVelocity(powerToTPS(maxDriveSpeed));
+        motor.setVelocityPIDFCoefficients(1.106, 0.1106, 0, 11.06);
+        motor.setPositionPIDFCoefficients(MOTOR_POSITION_COEFFICIENT);
+        motor.setTargetPositionTolerance(MOTOR_POSITION_TARGET_TOLERANCE);
+        maxDriveSpeed = Math.abs(maxDriveSpeed);
+        moveRobot(maxDriveSpeed);
 
         while (opModeIsActive() &&
                 !isStopRequested() &&
                 motor.isBusy() &&
                 driveTimer.seconds() < driveTime) {
             moveRobot(maxDriveSpeed);
+            logData();
+            sendTelemetry();
         }
     }
 
@@ -330,12 +335,10 @@ public class RHSPidfTest extends LinearOpMode {
 //        velocity = motor.getVelocity();
 //        feedForwardCalculate = motorFeedForward.calculate(velocity);
 //        motor.setPower(feedForwardCalculate);
-        motor.setVelocity(driveSpeed);
+        motor.setVelocity(powerToTPS(driveSpeed));
 
         position = motor.getCurrentPosition();
         current = motor.getCurrent(CurrentUnit.AMPS);
-        logData();
-        sendTelemetry();
     }
 
     /**

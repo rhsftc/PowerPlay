@@ -65,6 +65,7 @@ public class RHSMaxVelocity extends LinearOpMode {
                 telemetry.addData("Target", targetPosition);
                 telemetry.addData("current position", currentPosition);
                 telemetry.addData("current velocity", currentVelocity);
+                telemetry.addData("Busy", motor.isBusy());
                 telemetry.update();
             }
 
