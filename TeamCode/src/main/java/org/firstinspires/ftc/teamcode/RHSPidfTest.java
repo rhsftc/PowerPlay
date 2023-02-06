@@ -31,7 +31,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
-import com.arcrobotics.ftclib.controller.wpilibcontroller.SimpleMotorFeedforward;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.hardware.lynx.LynxModule;
@@ -66,7 +65,7 @@ public class RHSPidfTest extends LinearOpMode {
     static double MOTOR_TPS = ((MOTOR_RPM * .75) / 60) * COUNTS_PER_MOTOR_REV;
     static final double HEADING_THRESHOLD = .8;
     static final double MOTOR_POSITION_COEFFICIENT = 5;
-    static final int MOTOR_POSITION_TARGET_TOLERANCE = 20;
+    static final int MOTOR_POSITION_TARGET_TOLERANCE = 10;
     static final double MAX_VELOCITY = 2200;    // Use with arm feed forward.
     // Arm related
     static final double ARM_DRIVE_REDUCTION = 2;
@@ -88,7 +87,6 @@ public class RHSPidfTest extends LinearOpMode {
     double countsPerMotorRev = 2900;
     Datalog dataLog;
     private DcMotorEx motor = null;
-    private SimpleMotorFeedforward motorFeedForward;
     GamepadEx gamePadArm;
     private int position = 0;
     private ArmPosition selectedPosition;
@@ -134,7 +132,6 @@ public class RHSPidfTest extends LinearOpMode {
             motor = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.setDirection(DcMotorSimple.Direction.FORWARD);
-            motorFeedForward = new SimpleMotorFeedforward(10, .8);
             dataLog = new Datalog("pidfpositionvelocity");
         }
 
@@ -304,9 +301,10 @@ public class RHSPidfTest extends LinearOpMode {
 
         motor.setTargetPosition(target);
         motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        motor.setVelocityPIDFCoefficients(1.106, 0.1106, 0, 11.06);
+        motor.setVelocityPIDFCoefficients(1.137, 0.1137, 0, 11.37);
         motor.setPositionPIDFCoefficients(MOTOR_POSITION_COEFFICIENT);
         motor.setTargetPositionTolerance(MOTOR_POSITION_TARGET_TOLERANCE);
+
         maxDriveSpeed = Math.abs(maxDriveSpeed);
         moveRobot(maxDriveSpeed);
 
@@ -332,11 +330,9 @@ public class RHSPidfTest extends LinearOpMode {
         }
 
         driveSpeed = leftSpeed;
-//        velocity = motor.getVelocity();
-//        feedForwardCalculate = motorFeedForward.calculate(velocity);
-//        motor.setPower(feedForwardCalculate);
         motor.setVelocity(powerToTPS(driveSpeed));
 
+        velocity = motor.getVelocity();
         position = motor.getCurrentPosition();
         current = motor.getCurrent(CurrentUnit.AMPS);
     }
