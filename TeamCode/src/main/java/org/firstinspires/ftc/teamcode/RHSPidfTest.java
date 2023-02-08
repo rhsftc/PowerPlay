@@ -33,7 +33,6 @@ import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.wpilibcontroller.ElevatorFeedforward;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -42,8 +41,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-
-import java.util.List;
 
 @Config
 @TeleOp(name = "PIDF Test", group = "motor")
@@ -126,21 +123,13 @@ public class RHSPidfTest extends LinearOpMode {
             armMotor = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
             armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
             armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            armFeedForward = new ElevatorFeedforward(12, 20, .9);
-            dataLog = new Datalog("pidfarmvelocityposition");
+            armFeedForward = new ElevatorFeedforward(12, 20, 5);
+            dataLog = new Datalog("pidfarmelevatorFF");
         } else {
             motor = hardwareMap.get(DcMotorEx.class, "leftbackdrive");
             motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             motor.setDirection(DcMotorSimple.Direction.FORWARD);
             dataLog = new Datalog("pidfpositionvelocity");
-        }
-
-        // Important Step 1: Instantiate motor first and with MotoeEx or DCMotorEx.
-        // Important Step 2: Get access to a list of Expansion Hub Modules to enable changing caching methods.
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
-        // Important Step 3: Set all Expansion hubs to use the AUTO Bulk Caching mode
-        for (LynxModule module : allHubs) {
-            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
         telemetry.addLine("Ready for Start");
@@ -149,60 +138,60 @@ public class RHSPidfTest extends LinearOpMode {
         waitForStart();
         runtime.reset();
         while (opModeIsActive() && !isStopRequested()) {
-//            if (isArmTest) {
-//                gamePadArm.readButtons();
-//                ProcessArm();
-//            } else {
-            if (!isMotorFinished) {
-                driveStraight(DRIVE_SPEED, 36, 3);
-                sleep(750);
-                isMotorFinished = true;
+            if (isArmTest) {
+                gamePadArm.readButtons();
+                ProcessArm();
+                sendTelemetry();
+            } else {
+                if (!isMotorFinished) {
+                    driveStraight(DRIVE_SPEED, 36, 3);
+                    sleep(750);
+                    isMotorFinished = true;
+                }
             }
-
-//            }
         }
     }
 
     public void ProcessArm() {
-        ArmPosition position = null;
+        ArmPosition armPosition = null;
         // Adjust position
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
-            position = ArmPosition.ADJUST_DOWN;
+            armPosition = ArmPosition.ADJUST_DOWN;
         }
 
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
-            position = ArmPosition.ADJUST_UP;
+            armPosition = ArmPosition.ADJUST_UP;
         }
 
         // Low junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.A)) {
-            position = ArmPosition.LOW;
+            armPosition = ArmPosition.LOW;
         }
 
         // medium junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.B)) {
-            position = ArmPosition.MEDIUM;
+            armPosition = ArmPosition.MEDIUM;
         }
 
         // high junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.Y)) {
-            position = ArmPosition.HIGH;
+            armPosition = ArmPosition.HIGH;
         }
 
         // ground junction
         if (gamePadArm.wasJustPressed(GamepadKeys.Button.X)) {
-            position = ArmPosition.HOME;
+            armPosition = ArmPosition.HOME;
         }
 
-        if (position != null) {
-            moveArm(position);
+        if (armPosition != null) {
+            moveArm(armPosition);
         }
     }
 
-    public void moveArm(ArmPosition position) {
-        selectedPosition = position;
-        this.position = armMotor.getCurrentPosition();
-        switch (position) {
+    public void moveArm(ArmPosition armPosition) {
+        selectedPosition = armPosition;
+        position = armMotor.getCurrentPosition();
+        switch (armPosition) {
             case HOME:
                 target = HOME_POSITION * (int) ARM_COUNTS_PER_INCH;
                 break;
@@ -216,10 +205,10 @@ public class RHSPidfTest extends LinearOpMode {
                 target = (HIGH_JUNCTION * (int) ARM_COUNTS_PER_INCH);
                 break;
             case ADJUST_UP:
-                target = this.position + (ADJUST_ARM_INCREMENT * (int) ARM_COUNTS_PER_INCH);
+                target = position + (ADJUST_ARM_INCREMENT * (int) ARM_COUNTS_PER_INCH);
                 break;
             case ADJUST_DOWN:
-                target = this.position - (ADJUST_ARM_INCREMENT * (int) ARM_COUNTS_PER_INCH);
+                target = position - (ADJUST_ARM_INCREMENT * (int) ARM_COUNTS_PER_INCH);
                 break;
             default:
                 return;
@@ -227,20 +216,20 @@ public class RHSPidfTest extends LinearOpMode {
 
         // Prevent arm moving below HOME_POSITION
         target = Math.max(target, HOME_POSITION * (int) ARM_COUNTS_PER_INCH);
+        target = Math.min(target, HIGH_JUNCTION * (int) ARM_COUNTS_PER_INCH);
         armMotor.setTargetPosition(target);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setVelocityPIDFCoefficients(1.26, 0.126, 0, 12.6);
-        armMotor.setPositionPIDFCoefficients(5);
-        armMotor.setTargetPositionTolerance(5);
-//        armMotor.setVelocity(TPS);
-        armMotor.setVelocity(MAX_VELOCITY);
+//        armMotor.setVelocityPIDFCoefficients(1.3429, 0.13429, 0, 13.429);
+//        armMotor.setPositionPIDFCoefficients(5);
+        armMotor.setTargetPositionTolerance(10);
+        armMotor.setVelocity(TPS);
+//        armMotor.setVelocity(MAX_VELOCITY);
 
-        while (armMotor.isBusy() && !isStopRequested()) {
+        while (armMotor.isBusy()) {
             velocity = armMotor.getVelocity();
             feedForwardCalculate = armFeedForward.calculate(velocity);
-//            armMotor.setVelocity(feedForwardCalculate);
-            armMotor.setVelocity(MAX_VELOCITY);
-            this.position = armMotor.getCurrentPosition();
+            armMotor.setVelocity(feedForwardCalculate);
+            position = armMotor.getCurrentPosition();
             current = armMotor.getCurrent(CurrentUnit.AMPS);
             isBusy = armMotor.isBusy();
             logData();
